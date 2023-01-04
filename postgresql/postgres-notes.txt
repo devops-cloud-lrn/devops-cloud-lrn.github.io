@@ -1,0 +1,22 @@
+Date: January 3rd, 2023
+Relationships:
+1. One - One
+2. One - Many
+3. Many - One
+4. Many - Many
+
+CREATE TABLE table-name (
+    id SERIAL PRIMARY KEY 
+    col2 INTEGER REFERENCES another-table(column-name) FOREIGN-KEY-CONSTRAINT
+)
+
+SERIAL          -- is to generate the integer automatically when ever a new record is being inserted into the table 
+PRIMARY KEY     -- Creates a primary key index and constraint on the column id
+REFERENCES      -- Creates a foreign key constraint and index on the column 'column-name' of the table 'another-table'
+
+FOREIGN-KEY-CONSTRAINT: 
+1. ON DELETE RESTRICT       - Default Option - Throws an error when the root row is deleted
+2. ON DELETE NO ACTION      - Throws an error
+3. ON DELETE CASCADE        - Deletes all the rows from the referencing table
+4. ON DELETE SET NULL       - Updates with the NULL value
+5. ON DELETE SET DEFAULT    - Updates with the default value set on the column
