@@ -45,3 +45,19 @@ HAVING   - filters on set of groups  So HAVING will always be preceded with GROU
 
 WHERE AND HAVING can be combined
 Ex: SELECT A, B,C FROM TABLE1 WHERE CONDITION GROUP BY COLUMN HAVING CONDITION
+
+SORTING:
+ASC     - Default
+DESC    - 
+Note: You can sort on multiple columns 
+Ex:  SELECT * FROM TABLE ORDER BY COL1 ASC COL2 DESC
+Here all the records will be sorted in ascending order based on column1 and when column1 values are same then all those 
+records will be sorted based on column2 in descending order. 
+
+UNION           -- Combines the values. and duplicates will be removed
+UNION ALL       -- Combines the values. 
+INTERSECT       -- Displays only the intersection and duplicate values will be removed
+INTERSECT ALL   -- Displays only the intersection and if each result-set contains duplicates they get displayed
+EXCEPT          -- Display all the values of the first result set and remove all the intersection values. Removes duplicates 
+EXCEPT ALL      -- Display all the values of the first result set and remove all the intersection values. 
+
