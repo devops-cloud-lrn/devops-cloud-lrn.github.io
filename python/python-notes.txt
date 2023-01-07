@@ -1,0 +1,42 @@
+January 4th , 2023
+1.  // converts float to int
+Ex:
+3/2 results 1.5
+3//2 results 1
+
+2. spaces are preferred to tabs (4 space indentation is generally preferred)
+
+3.  for _ in list will work when we don't use the list-item with in the for loop
+
+4. List Functions
+
+5. Default Functions
+    len(string/list)
+    str.lower()
+6. if n in string/list  -- returns true/false 
+7. "".join(list) -- creates a string by joining all the list values 
+8. random.choice(list) -- returns a random list-item
+9. random.randint(starting-number, ending-number) -- returns a random integer value
+10. random.random() -- returns a float value between 0, 1
+11. random.shuffle(list) -- shuffles all the values in the list
+12. range(n,m, s)  - n is the starting number, m is the ending number(not inclusive) s is the step , if not specified the default value of s is 1
+13. List Functions
+    list.append()
+    list.pop()
+    list.insert(index, item)
+    list += list value -- will append the list value to the list
+    
+FUNCTIONS:
+parameter  -- part of the function definition 
+argument   -- actual value that is being passed while calling the function
+Ex:
+def sum(a,b) :
+    print(a+b)
+sum(1,2)
+
+Here in the above  example, a,b are parameters and 1,2 are arguments.
+
+SHORT CUTS:
+Ctrl + / to comment out selected portion
+Ctrl + Shift } to wrap the selected word in curly braces.
+

@@ -20,3 +20,28 @@ FOREIGN-KEY-CONSTRAINT:
 3. ON DELETE CASCADE        - Deletes all the rows from the referencing table
 4. ON DELETE SET NULL       - Updates with the NULL value
 5. ON DELETE SET DEFAULT    - Updates with the default value set on the column
+
+Date: January 4rd, 2023
+Joins and Aggregations
+Inner Join
+Left Join
+Right Join
+Full Join
+Natural Join
+
+Date: 5th , 2023
+Group By
+You can use JOIN ON condition when using GROUP BY clause. 
+
+Aggregate Functions
+MIN()
+MAX()
+SUM()
+COUNT()
+AVG()
+
+WHERE    - filters on set of rows
+HAVING   - filters on set of groups  So HAVING will always be preceded with GROUP BY 
+
+WHERE AND HAVING can be combined
+Ex: SELECT A, B,C FROM TABLE1 WHERE CONDITION GROUP BY COLUMN HAVING CONDITION
