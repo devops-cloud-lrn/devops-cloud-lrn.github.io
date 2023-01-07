@@ -1,0 +1,5 @@
+Microsoft TAY
+Facebook AI
+Google Lambda
+DALL·E
+openai
