@@ -1,0 +1,9 @@
+Ctrl + /  
+To comment a line or block in a python file. Select the block and press Ctrl + /
+
+SHIFT + " 
+To surround the string with quotes , select the string and press SHIFT + "
+
+Ctrl + Shift } 
+to wrap the selected word in curly braces.
+

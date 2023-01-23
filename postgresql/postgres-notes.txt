@@ -28,6 +28,9 @@ Left Join
 Right Join
 Full Join
 Natural Join
+Cross Join
+Self Join
+
 
 Date: 5th , 2023
 Group By
@@ -54,10 +57,398 @@ Ex:  SELECT * FROM TABLE ORDER BY COL1 ASC COL2 DESC
 Here all the records will be sorted in ascending order based on column1 and when column1 values are same then all those 
 records will be sorted based on column2 in descending order. 
 
+OPERATORS
+
 UNION           -- Combines the values. and duplicates will be removed
 UNION ALL       -- Combines the values. 
 INTERSECT       -- Displays only the intersection and duplicate values will be removed
 INTERSECT ALL   -- Displays only the intersection and if each result-set contains duplicates they get displayed
 EXCEPT          -- Display all the values of the first result set and remove all the intersection values. Removes duplicates 
 EXCEPT ALL      -- Display all the values of the first result set and remove all the intersection values. 
+ALL             -- Used in Where condition SELECT * FROM TABLE1 WHERE COL1 != ANY (SELECT COL FROM TABLE2)
+ANY /SOME       -- Used in SubQuery
+BETWEEN         -- Used in Where Condition to filter records with in the specified range.  (SELECT COL1, COL2, FROM TABLE1 WHERE COL3 BETWEEN VAL1 AND VAL2) - INCLUSIVE OF BOTH VALUES VAL1 & VAL2
+IN              -- Used in Where Condition SELECT * FROM TABLE1 WHERE COL1 IN (VALUES)
+LIKE\NOT LIKE   --  % for zero or more characters , _ exactly one character , 
+ILIKE\NOT ILIKE --  LIKE with NO case sensitivity
+EXISTS/NOT EXISTS -- The Exists operator is a boolean operator that tests for existence of rows in a subquery
+                     If the subquery returns at least one row, the result of EXISTS is true. 
+                     If the subquery return NULL  EXISTS returns TRUE
+                     Generally used as part of corelated subquery 
+
+~~          -- LIKE
+~~*         -- ILIKE
+!~~         -- NOT LIKE
+!~~*        -- NOT ILIKE
+
+IS NULL /IS NOT NULL     -- needs to be used to check NULL values. We SHOULD-NOT use = NULL
+NULL is always not equal to NULL -- SELECT * FROM TABLE1 WHERE COL1 = NULL doesn't work
+
+LIMIT   -- POSTGRES Terminology. Limits the rows 
+OFFSET  -- SELECT * FROM TABLE LIMIT 10 OFFSET 10  -- RETURNS 10 rows from 10 i.e. 10 to 20
+
+UNDERSTAND ABOUT 
+ROLLUP
+GROUP SETS 
+CUBE
+
+
+SUB- QUERIES
+1. A source of 'A VALUE'     -  COUNT(*) , MAX(col1) etc
+2. A source of 'ROWS'        -  SELECT * FROM TABLE as a subquery
+3. A source of a column'     -  SELECT  COL-1 FROM TABLE1
+
+CORRELATED SUBQUERY:
+When the condition is applied between outer query column with inner query column we call it as CORRELATED SubQuery.
+Generally we use it when we filter rows in the same table. the OUTER TABLE and INNER TABLE will be the same.
+Ex:
+PRODUCTS TABLE - id, name, dept, price, weight
+show the name, dept, and price of the most expensive product in each department. 
+SELECT NAME,DEPT, PRICE FROM PRODUCTS P WHERE P.PRICE = (SELECT MAX(PRICE) FROM PRODUCTS P2 WHERE P.DEPT = P2.DEPT )
+
+SELECT (A SUBQUERY)     -- HERE FROM CLAUSE IS NOT REQURED FOR OUTER SELECT
+SELECT (SELECT COL1, COL2 FROM TABLE)
+Note: This is valid only when the subquery returns only one row
+Example: SELECT ( MAX VALUE QUERY /AVG VALUE QUERY )
+
+DISTINCT -- FINDING THE UNIQUIE VALUES
+Note: It is a kind of group by. you can use group by in place of distinct but not vice versa
+
+FUNCTIONS --
+GREATEST (array of values)
+LEAST(array of values)
+CASE 
+    WHEN CONDITION THEN VALUE
+    WHEN CONDITION THEN VALUE
+    ELSE VALUE
+END    AS COL_NAME
+
+
+DATA TYPES
+1. NUMBERS
+    --SMALLINT
+    --INTEGER
+    --BIGINTEGER
+
+    --SMALLSERIAL
+    --SERIAL
+    --BIG SERIAL
+
+    -- DECIMAL
+    -- NUMERIC
+    -- REAL
+    -- DOUBLE PRECISION
+    -- FLOAT
+    
+
+2. CURRENCY
+3. BINARY
+4. DATE/TIME
+5. CHARACTER
+    --VAR
+    --VARCHAR
+    --CHAR
+6. JSON
+7. GEOMETRIC
+8. RANGE
+ARRAYS
+BOOLEAN
+XML
+UUID
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Postgres Performance :
+
+1. Where does Postgres Store Data?
+SHOW data_directory;
+This retrieves the path where data directory is installed for that postgresql
+In the 'base' folder under data directory all the databases will be stored/persisted. 
+Each database will be stored as a folder and an integer is given as the folder name. 
+
+2. How to know what database is mapped to the folder name.
+The folder name will be a number not the actual database name. 
+
+SELECT oid, datname from pg_database;
+
+
+3. What are the contents of the database folder? 
+
+For example, postgres database folder. Here postgres database folder will be mapped to a integer number. 
+When you go into that folder, you would see a lot of files.  To know more details about that folder, 
+Run the query
+
+SELECT * FROM pg_class;
+
+This will show all the details of all the databases created under the installed Postgresql
+
+
+HEAPS , BLOCKS and TUPLES 
+-------------------------
+
+1. What is a HEAP or HEAP File?
+HEAP/HEAP File contains all the information for a specific relation/table. It holds all the data for a particular table.
+Ex: if we have created a table called EMPLOYEES, a HEAP File gets created to store all the Employees information. 
+This file will be stored under "<<data_directory>>"/base/<<oid_folder_of_the_database>>//<<oid_of_the_table>>
+Note: This is not HEAP Data structure
+
+
+2. What is a Tuple or Item
+It is nothing but a particular row of a table. [Individual row from the table]
+
+3. What is Block or Page
+The Heap file is divided into many different 'Blocks' or 'Pages'.  Each Page/Block stores multiple number of rows
+Each Block/Page is 8 KB in size.
+
+4. How BLOCK is managed/stored 
+Each Block would have 5 sections
+1. Page Header Data  (Information about the block) -24 bytes long
+2. Item Id Data (Information about the Tuples) - 4 bytes per item. 
+3. Free Space: The unallocated space. New item identifiers are allocated from the start of this area, new items from the end. 
+4. Items (Data of the Tuples)
+5. Special Space (Index access method specific data. Different methods store different data. Empty in ordinary files)
+
+
+5. How PostGres Stores data at the binary level?
+Link: https://www.postgresql.org/docs/current/storage-page-layout.html
+
+
+INDEXES
+-------
+
+1. What is a Full Table Scan?
+If there is no Index created, before applying the filters all the data from the Heap File will be loaded RAM.
+The search takes place one by one. As a result it would impact the Performance.
+The primary objective is to make sure the data transfer between hard-disk and RAM is minimized. Try ways to limit the data transfer.
+In general, the Full table scan results into a poor performance.  But there are situations where Full Table Scan is desirable. 
+
+2. What is an Index?
+Index is a data structure that efficiently tells us what block/index a record is stored. 
+When Index is created, a separate mapping file is build to store the address of each value.
+1. A file containing column value and it address gets created
+2. Based on the Index Type, the elements will be organized/stored in a meaningful way. [Alphabetical for text and values for numbers]
+3. For example, B-Tree Index Type, all the values will be sorted organized into a tree by applying B-Tree.
+5. All the values will be distributed in the leaf-nodes evenly in order left to right. 
+
+3. How to create an Index
+When the Index name is not provided
+CREATE INDEX ON <<table-name>> (<<column-name>>)
+Generally tablename_columnname_idx is the convention being followed.
+
+To create Index with a predefined name
+CREATE INDEX <<index-name>>ON <<table-name>> (<<column-name>>)
+
+4. How to Delete an Index
+DROP INDEX <<index-name>>
+
+
+4. HOW to BENCHMARK execution time of SQL Queries?
+In general, when you execute any SQL , we get a value explaining how much time it took to complete the query.
+It includes query execution time and network travel time etc. 
+To BENCH MARK in a right way we need to use the below 
+
+EXPLAIN ANALYZE <<sql-query>>
+It will result QUERY_PLAN 
+
+5. What are the benefits of Indexes?
+In general,We will get the tremendous benefits by creating Indexes.
+Improved query performance: Indexes allow the database to quickly locate and retrieve specific rows of data, which can greatly improve the performance of queries that search for specific data.
+Reduced disk I/O: Without indexes, the database would need to scan the entire table to find the desired data, which can be slow and resource-intensive. Indexes allow the database to quickly locate the desired data, reducing the amount of disk I/O required.
+Improved concurrency: Indexes can improve the concurrency of a database by reducing the amount of time that a table lock is held.
+Enforced uniqueness: Some indexes, such as unique indexes, can be used to enforce uniqueness constraints on the data.
+Improved join performance: Indexes can also improve the performance of joins, by reducing the amount of data that needs to be scanned when joining tables.
+Improved performance for aggregate functions: Certain types of indexes, such as B-tree, can be used to improve the performance of aggregate functions such as SUM, COUNT, AVG, etc.
+Improved performance for sorting: Indexes can be used to sort the data, which can improve the performance of ORDER BY clauses.
+
+6. What are the downsides of creating Indexes
+Increased disk space usage: Indexes require additional disk space to store the index data. This can be a significant issue for large tables or for systems with limited disk space.
+Increased write performance: Every time a row is inserted, updated, or deleted in a table, the corresponding index must also be updated. This can slow down write performance, especially for large tables or high write loads.
+Increased maintenance overhead: Indexes need to be maintained, which can add additional overhead. This includes tasks such as updating the index when data is added or removed, and periodically rebuilding the index to improve performance.
+Query performance trade-offs: Indexes can improve query performance for certain types of queries, but they may not be beneficial for all queries. Additionally, using too many indexes can actually slow down certain types of queries.
+Index bloat: Over time, indexes can become fragmented, which can cause them to take up more disk space and slow down performance. Regularly monitoring and vacuuming the indexes can help prevent this issue.
+un-used Indexes: In certain scenarios, Postgres doesn't use indexes while executing queries. We need to be aware and create them only when they are needed.
+
+7. What is Index Fragmentation?
+
+8. When do we need to rebuild Indexes periodically in Postgres ?
+
+
+
+9. How to get the table size and index size ?
+SELECT pg_size_pretty(pg_relation_size('<<table_name>>'))
+SELECT pg_size_pretty(pg_relation_size('<<index_name>>'))
+
+10. What are the different types of Indexes?
+1. B-Tree (Balanced Tree Index):
+A B-Tree index is a type of index that is commonly used in relational databases, including PostgreSQL. B-Tree stands for balanced tree, which refers to the way the index is structured. It is a general purpose index. 99% of the time you want this.
+In a B-Tree index, the data is organized into a hierarchical structure of nodes and keys. Each node in the tree contains a collection of keys, which are used to navigate to the next level of the tree. The keys in each node are sorted in ascending order, which allows for efficient search, insertion, and deletion operations.
+When a query is executed that requires data from a B-Tree indexed table, the database uses the keys in the B-Tree index to quickly locate the desired data. This allows the database to avoid scanning the entire table, which can greatly improve the performance of the query.
+B-Tree indexes are particularly useful for large datasets, and are well suited for queries that involve range searches, such as WHERE id BETWEEN 100 AND 200. They also support sorting and aggregate functions such as SUM, COUNT, AVG etc.
+Additionally, B-Tree indexes are multi-purpose indexes and can be used for many types of queries, including single-column and multi-column queries, and for enforcing unique constraints on the indexed columns.
+
+2. Hash Index:
+It used to speed up simple equality checks.
+A HASH index is a type of index in PostgreSQL that uses a hash function to map the indexed values to a fixed number of buckets. It is useful for exact-match lookups of a single column, particularly when the cardinality of the indexed column is not too high, and the data distribution is random.
+HASH indexes are created using the CREATE INDEX command with the USING HASH option. 
+The syntax would be CREATE INDEX index_name ON table_name (column_name) USING HASH;.
+HASH indexes are useful for:
+Exact-match lookups: HASH indexes are particularly efficient for exact-match lookups on a single column. They can quickly locate the desired data by hashing the indexed value and looking up the corresponding bucket.
+High-cardinality data: HASH indexes are useful for high-cardinality data, which means data with a large number of distinct values, as it can handle a large number of unique values.
+Random data distribution: HASH indexes are most efficient when the data distribution is random.
+Equality operator: HASH indexes are most efficient when used with the equality operator (=)
+However, HASH indexes have some drawbacks, such as they are not useful for range queries and they can be slower than other types of indexes when the data distribution is not random, or when the table has a high number of duplicates values. Additionally, they can not be used for sorting or aggregate functions such as SUM, COUNT, AVG etc.
+It's worth noting that PostgreSQL only creates an index when it determines that the index will be useful and beneficial for the performance of the queries, and it's always recommended to monitor the performance of the queries and indexes to ensure that they are working as expected.
+
+2.1  What is the cardinality of the indexed column?
+The cardinality of an indexed column refers to the number of distinct values in that column. The cardinality of a column can have an impact on the performance of a HASH index.
+When the cardinality of the indexed column is low, it means that there are relatively few distinct values in the column. In this case, a HASH index may not be as efficient as other types of indexes, such as a B-Tree index
+
+3. GiST Index:
+It is used for Geometry, full-text search.
+GiST (Generalized Search Tree) index is a type of index in PostgreSQL that is used for efficient search on complex data types and operators. It's a multi-purpose index that can be used for several types of data, such as geometric data, IP addresses, full-text search and more.
+GiST indexes are created using the CREATE INDEX command with the USING option and the gist method. The syntax would be CREATE INDEX index_name ON table_name USING GIST(column_name);.
+GiST indexes are useful for:
+Complex data types: GiST indexes are designed for efficient search on complex data types and operators that cannot be indexed by B-tree or Hash indexes. It can be used for spatial data, IP addresses, full-text search, and more.
+Range queries: GiST indexes are efficient for range queries, such as SELECT ... WHERE column_name > x AND column_name < y.
+Spatial data: GiST indexes are particularly useful for spatial data and spatial queries, such as SELECT ... WHERE ST_Contains(column_name, x)
+Text search: GiST indexes can be used to improve the performance of full-text search queries
+However, GiST indexes have some limitations, such as they can be slower than other types of indexes when the data distribution is not random, they can't be used for sorting, and they can have high maintenance overhead.
+It's worth noting that PostgreSQL only creates an index when it determines that the index will be useful and beneficial for the performance of the queries, and it's always recommended to monitor the performance of the queries and indexes to ensure that they are working as expected.
+
+4. SP-GiST Index:
+It is used for clustered data, such as dates - many rows might have the same year.
+SP-GiST (Space-Partitioned Generalized Search Tree) index is a type of index in PostgreSQL that is similar to the GiST index, but it is designed for data that can be partitioned in a space-efficient way, such as IP addresses, geometric data, and more.
+SP-GiST indexes are created using the CREATE INDEX command with the USING option and the spgist method. The syntax would be CREATE INDEX index_name ON table_name USING SPGIST(column_name);
+SP-GiST indexes are useful for:
+Complex data types: SP-GiST indexes are designed for efficient search on complex data types that can be partitioned in a space-efficient way, such as IP addresses, geometric data, and more.
+Range queries: SP-GiST indexes are efficient for range queries, such as SELECT ... WHERE column_name > x AND column_name < y.
+Spatial data: SP-GiST indexes are particularly useful for spatial data and spatial queries, such as SELECT ... WHERE ST_Contains(column_name, x)
+Text search: SP-GiST indexes can be used to improve the performance of full-text search queries
+Data that can be partitioned in a space-efficient way : SP-GiST indexes are particularly useful for data that can be partitioned in a space-efficient way, as they can handle high-cardinality data and random data distribution.
+However, SP-GiST indexes have some limitations, such as they can be slower than other types of indexes when the data distribution is not random, they can't be used for sorting, and they can have high maintenance overhead.
+It's worth noting that PostgreSQL only creates an index when it determines that the index will be useful and beneficial for the performance of the queries, and it's always recommended to monitor the performance of the queries and indexes to ensure that they are working as expected.
+
+5. GIN Index:
+For columns that contain arrays or JSON data
+GIN (Generalized Inverted Index) is a type of index in PostgreSQL that is used for efficient search on data with multiple values per row, such as arrays, full-text search, and hstore data type. It's a multi-purpose index that can be used for several types of data, such as text search, IP addresses and more.
+GIN indexes are created using the CREATE INDEX command with the USING GIN option. The syntax would be CREATE INDEX index_name ON table_name USING GIN(column_name);
+GIN indexes are useful for:
+Data with multiple values per row: GIN indexes are particularly efficient for data with multiple values per row, such as arrays, full-text search, and hstore data type.
+Text search: GIN indexes are commonly used for full-text search and other text search-related queries.
+Efficient search: GIN indexes are efficient for search queries, such as SELECT ... WHERE column_name @> x
+High-cardinality data: GIN indexes are useful for high-cardinality data, which means data with a large number of distinct values, as it can handle a large number of unique values
+Data with complex data types: GIN indexes can be used for data with complex data types that cannot be indexed by B-tree or Hash indexes.
+However, GIN indexes have some limitations, such as they can be slower than other types of indexes when the data distribution is not random, they can't be used for sorting, and they can have high maintenance overhead.
+It's worth noting that PostgreSQL only creates an index when it determines that the index will be useful and beneficial for the performance of the queries, and it's always recommended to monitor the performance of the queries and indexes to ensure that they are working as expected.
+
+5.1 How GIN Index is best for JSON data ?
+
+6. BRIN Index:
+It is used and specialized for really large datasets. 
+BRIN (Block Range INdex) is a type of index in PostgreSQL that is used for large-scale data with a sortable order, such as time-series data or data that is sorted by an integer or a timestamp column. It's particularly useful for tables that have millions or billions of rows, where a traditional B-tree index would not be efficient.
+BRIN indexes are created using the CREATE INDEX command with the USING option and the brin method. The syntax would be CREATE INDEX index_name ON table_name USING BRIN (column_name).
+BRIN indexes are useful for:
+Large-scale data: BRIN indexes are particularly useful for large-scale data with a sortable order, such as time-series data or data that is sorted by an integer or a timestamp column.
+Range queries: BRIN indexes are efficient for range queries, such as SELECT ... WHERE column_name > x AND column_name < y.
+Time-series data: BRIN indexes are particularly useful for time-series data, as they can handle data with a large number of rows and provide efficient queries on range of timestamps.
+Data sorted by an integer or a timestamp column: BRIN indexes can handle data sorted by an integer or a timestamp column, which means that the indexed column has a sortable order.
+Large-scale tables: BRIN indexes are particularly useful for large-scale tables, where a traditional B-tree index would not be efficient.
+However, BRIN indexes have some limitations, such as they are not useful for data that is not sorted by an integer or a timestamp column, they can't be used for sorting, and they can have high maintenance overhead.
+It's worth noting that PostgreSQL only creates an index when it determines that the index will be useful and beneficial for the performance of the queries, and it's always recommended to monitor the performance of the queries and indexes to ensure that they are working as expected.
+
+7. what is the difference between GiST Index and SP-GiST Index?
+
+11. When does POSTGRES automatically creates Indexes ?
+Primary keys: When a primary key constraint is created on a table, PostgreSQL automatically creates a unique index on the primary key column(s).
+Foreign keys: When a foreign key constraint is created on a table, PostgreSQL automatically creates an index on the foreign key column(s).
+Unique constraints: When a unique constraint is created on a table, PostgreSQL automatically creates a unique index on the constrained column(s).
+Full-text search: When a text search index is created using the full-text search functionality in PostgreSQL, the database will automatically create an index on the specified text search column(s)
+Expressions index: When an expression index is created, PostgreSQL creates an index on the result of the specified expression.
+GIN (Generalized Inverted Index): When a GIN index is created, PostgreSQL automatically creates an index on the specified column(s)
+It's worth noting that PostgreSQL only creates an index when it determines that the index will be useful and beneficial for the performance of the queries. And it's always recommended to monitor the performance of the queries and indexes to ensure that they are working as expected.
+
+11.1 : How to see automatically generated indexes ?
+In general, these indexes do not appear in the constraints section in PG-Admin 
+To pull all the indexes we need to pull it form pg_class table
+SELECT relname, relkind  FROM pg_class WHERE relkind = 'i'
+The pg_class table lists all the objects that exists in the database.  In the above 'i' refers to Index.
+
+
+12. When do we need to create Full-text search index ?
+
+13. When do we need to create Expression Index ?
+
+14. When do we need to create GIN Index ?
+
+15. What happens when Index is created
+A file gets created on the disk for the created index with a random number
+When you create an index in PostgreSQL, a new data structure is created that stores a copy of one or more columns of data from a table, 
+along with a pointer to the original data. This new data structure is organized in a way that allows for faster searching, sorting, and filtering of the data based on the indexed columns.
+The structure of the file internally has the following
+1. 8KB Meta Page
+2. 8KB Leaf Block/Page
+3. 8KB Leaf Block/Page
+4. 8KB Root Block/Page
+5. 8KB Leaf Block/Page etc.
+In Memory
+Meta Page --> Root Block/Page --> one or more Leaf Block/Page
+Include image here E:\SainathuniSarathBabuji\Learning\YEAR_2023\git\projects\databases\GITHUB\devops-cloud-lrn.github.io\assets\images\postgresql\index-in-memory.JPG
+
+16. What is pageinspect extension?
+The extension provides additional functionality in the postgresql
+The pageinspect extension would help to provide information  or inpsect about pages/blocks or Heap File. 
+
+Syntax: 
+CREATE EXTENSION pageinspect;
+
+SELECT * FROM bt_metap('<<index_name>>')
+
+Getting the information in the index Heap File
+SELECT * FROM bt_page_items('<<index_name>>')
+
+Getting the information in the specific page of a index heap file
+
+Syntax:
+SELECT * FROM bt_page_items('<<index-name>>', page_number)
+
+Example: 
+SELECT * FROM bt_page_items('user_username_idex', 1)
+some of the columns such as ctid will also be available in the user created tables. They will be hidden. 
+We can use them in the query.  The ctid will be a combination of two (page-number, index-number)
+
+if we use the page_number =3 which is a Root Node/page. Here ctid represents the pagenumber and index of the index heap file.  Here the index would mostly be 1. 
+for any other page number which is a Leaf(or Parent) Page/Block. Here ctid represents the pagenumber and index of the table heap file. 
+
+Every Leaf Page/Blocks first entry would have a pointer to the next page/block. 
+
+
+BASIC QUERY TUNING
+------------------
+
+1. what are the various steps involved while executing an SQL in Postgres
+In PostgreSQL, there are primarily 4 steps
+1. Parser
+   It validates the syntax and creates a query tree from the query that is being written by the user. It will be handling the query-tree to Rewrite 
+2. Rewriter
+    The query tree will be modified if needed so that query can be executed efficiently. Also if views are used they will be decomposed into underlying table references. 
+3. Planner
+    The goal of the planner is to look at the query tree and figure out what data needs to be fetched and comes up with different plans and strategies that is best and fastest. 
+    For example, it will try to check if there are any indexes and see if there is any efficiency in using them vs pulling the data directly without using indexes etc. 
+4. Execute
+    Run the Query
+
+
+
+
 

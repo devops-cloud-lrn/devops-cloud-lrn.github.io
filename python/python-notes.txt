@@ -35,8 +35,13 @@ def sum(a,b) :
 sum(1,2)
 
 Here in the above  example, a,b are parameters and 1,2 are arguments.
+We can also pass keyword arguments 
+sum(a=2,b=1) Here we are mapping the arguments to the parameters. 
+
+
 
 SHORT CUTS:
 Ctrl + / to comment out selected portion
 Ctrl + Shift } to wrap the selected word in curly braces.
+SHIFT + "  to wrap the selected word in quotes braces.
 
