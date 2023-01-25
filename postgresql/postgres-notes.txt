@@ -281,11 +281,11 @@ un-used Indexes: In certain scenarios, Postgres doesn't use indexes while execut
 
 7. What is Index Fragmentation?
 
-8. When do we need to rebuild Indexes periodically in Postgres ?
+8. When do we need to rebuild Indexes periodically in Postgres?
 
 
 
-9. How to get the table size and index size ?
+9. How to get the table size and index size?
 SELECT pg_size_pretty(pg_relation_size('<<table_name>>'))
 SELECT pg_size_pretty(pg_relation_size('<<index_name>>'))
 
@@ -389,7 +389,7 @@ The pg_class table lists all the objects that exists in the database.  In the ab
 
 13. When do we need to create Expression Index ?
 
-14. When do we need to create GIN Index ?
+14. When do we need to create GIN Index?
 
 15. What happens when Index is created
 A file gets created on the disk for the created index with a random number
