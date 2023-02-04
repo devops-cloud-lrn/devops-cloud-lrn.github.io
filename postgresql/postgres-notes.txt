@@ -451,4 +451,86 @@ In PostgreSQL, there are primarily 4 steps
 
 
 
+REGULAR EXPRESSIONS:
+
+[abc]  a,b or C
+[^abc] any character expcept a, b, C
+[a-z] a to z
+[A-Z] A to Z
+[a-zA-Z] a to z , A to Z
+[0-9] 0 to 9
+
+QUANTIFIERS
+
+[ ]?  Occurs 0 or 1 times
+[ ]+  Occurs 1 or more times
+[ ]*  Occurs 0 or more times
+[ ]{n}  Occurs n times
+[ ]{m,n}  Occurs at least m times but less than n times.
+[ ]{n,}  Occurs n or more times.
+
+META CHARACTERS
+\d  [0-9]
+\D  [^0-9]
+\w  [a-zA-Z_0-9]
+\W  [^w]
+\s  white space characters "[\f\n\r\t\v]".
+\S  non white space characters.
+"\p{Ll}"    [a-z]
+"\p{Lu}"    [A-Z]
+
+\ tells computer to treat special characters as search characters
++,?,\,.,*  i.e. \+,\?,\\,\.,\* 
+
+What are special characters
+"." (dot) which matches any single character except a newline.
+"*" which matches zero or more occurrences of the preceding character or group.
+"+" which matches one or more occurrences of the preceding character or group.
+"?" which matches zero or one occurrence of the preceding character or group.
+"^" which matches the start of a string.
+"$" which matches the end of a string.
+"|" which separates alternatives.
+"{" and "}" which are used to specify the number of occurrences of the preceding character or group.
+"(" and ")" which are used to group characters or sub-expressions.
+"[" and "]" which are used to specify a character class.
+"" which is used to escape special characters.
+
+\ is an escape character
+
+start           : ^
+end             : $
+single char     : .
+zero or one     : *
+zero or many    : *
+one or many     : +
+OR operator     : |
+AND operator    : &
+
+
+Zero-Width Assertions:
+It is a type of pattern in regular expressions that assert a condition without consuming any characters in the input string. 
+They do not affect the final matched string, but influence the matching process. 
+
+Positive Lookahead assertion:  (?=)
+Negative Lookahead assertion:  (?!)
+
+Positive Lookbehind assertion: (?<=)
+Negative Lookbehind assertion: (?<!)
+
+
+Postgres to test regular expression.
+
+select regexp_matches(E'search-string', 'regular-expression'  , 'g') as col  -- here 'g' stands to pull all the matches
+select regexp_matches(E'search-string', 'regular-expression' ) as col  -- here it will pull only the first match and stops executing. 
+
+In the regular expression if we specify '()' is what is going display. 
+For example: 
+select regexp_matches(E'abc@abc.com, bbc@bbc.com', '[a-z]+[@][a-z]+[\.]([a-z]+)'  , 'g') as col  -- it will return {com} only
+select regexp_matches(E'abc@abc.com, bbc@bbc.com', '[a-z]+[@][a-z]+[\.][a-z]+'  , 'g') as col   -- it will return {abc@abc.com} , {bbc@bbc.com}
+
+
+SELECT column from table where column ~'regular-expression'
+SELECT substring(column FROM 'regular-expression') from TABLE
+
+
 
