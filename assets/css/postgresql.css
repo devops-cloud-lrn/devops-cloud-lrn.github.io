@@ -37,4 +37,31 @@
     font-style: italic;
     background-color: rgb(245, 229, 8);
   }
+
+  .brown {
+    color: #795548 !important;
+  }  
+
+  .blue {
+    color: #007bff !important;
+  }  
+
+  .red {
+  color: #dc3545 !important;
+  }
   
+  .darkbrown {
+    color: #44251a !important;
+  }  
+
+  .big-font {
+    font-family: Corbel;
+    font-size: 20px !important;
+    color: darkblue;
+    font-weight: 600;
+    font-style: italic;
+  }
+
+  .justify{
+    text-align: justify;
+  }

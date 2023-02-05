@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <link href="assets/images/favicon.png" rel="icon" />
+    <title>Saibaba | Documentation | Notes</title>
+    <meta name="description" content="Learning and Documentation" />
+    <meta name="author" content="saibaba.link" />
+    <!-- Stylesheet
+============================== -->
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+   
+       <!-- Font Awesome Icon -->
+       <link rel="stylesheet" type="text/css" href="/assets/vendor/font-awesome/css/all.min.css" />
+       <!-- Magnific Popup -->
+       <link rel="stylesheet" type="text/css" href="/assets/vendor/magnific-popup/magnific-popup.min.css" />
+       <!-- Highlight Syntax -->
+       <link rel="stylesheet" type="text/css" href="/assets/vendor/highlight.js/styles/github.css" />
+
+       
+    <!-- HIGHLIGHT SQL Syntax-->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.2/styles/default.min.css" />
+    <!-- Custom Stylesheet -->
+    <link rel="stylesheet" type="text/css" href="/assets/css/stylesheet.css" />
+    <link rel="stylesheet" type="text/css" href="/assets/css/postgresql.css" />
+  </head>
+  <body data-spy="scroll" data-target=".idocs-navigation" data-offset="125">
+    <!-- Document Wrapper   
+=============================== -->
+    <div id="main-wrapper">
+      <!-- Header
+  ============================ -->
+      <header id="header" class="sticky-top">
+        <!-- Navbar -->
+        <nav class="primary-menu navbar navbar-expand-lg navbar-dropdown-dark">
+          <div class="container-fluid">
+
+
+                       <!-- Sidebar Toggler -->
+                       <button id="sidebarCollapse" class="navbar-toggler d-block d-md-none" type="button">
+                        <span></span>
+                        <span class="w-75"></span>
+                        <span class="w-50"></span>
+                      </button>
+  
+                      
+
+            <a class="logo ml-md-3" href="index.html" title="Learning and Documentation">
+              <img src="assets/images/learning_documentation.png" alt="Learning and Documentation" />
+            </a>
+
+            <span class="text-2 ml-2">v1.0</span>
+            <!-- Logo End -->
+            <!-- Navbar Toggler -->
+            <button class="navbar-toggler ml-auto" type="button" data-toggle="collapse" data-target="#header-nav">
+              <span></span>
+              <span></span>
+              <span></span>
+            </button>
+
+
+            <div id="header-nav" class="collapse navbar-collapse justify-content-end">
+              <ul class="navbar-nav">
+                <li class="dropdown">
+                  <a class="dropdown-toggle" href="#">Additional Resources</a>
+                  <ul class="dropdown-menu">
+                    <li>
+                      <a target="_blank" class="dropdown-item" href="https://www.postgresqltutorial.com/">Postgresql-Tutorial</a>
+                    </li>
+                    <li class="dropdown">
+                      <a class="dropdown-item dropdown-toggle" href="#">Dropdown Action</a>
+                      <ul class="dropdown-menu">
+                        <li>
+                          <a class="dropdown-item" href="index.html">Action</a>
+                        </li>
+                        <li>
+                          <a class="dropdown-item" href="feature-header-dark.html">Another Action</a>
+                        </li>
+                        <li>
+                          <a class="dropdown-item" href="feature-header-primary.html">Something Else Here</a>
+                        </li>
+                        <li>
+                          <a class="dropdown-item" href="index-2.html">Another Link</a>
+                        </li>
+                      </ul>
+                    </li>
+                    <li>
+                      <a class="dropdown-item" href="#">Another Action</a>
+                    </li>
+                    <li>
+                      <a class="dropdown-item" href="#">Something Else Here</a>
+                    </li>
+                  </ul>
+                </li>
+                <li class="dropdown">
+                  <a class="dropdown-toggle" href="#">Online Tools</a>
+                  <ul class="dropdown-menu">
+                    <li>
+                      <a target="_blank" class="dropdown-item" href="https://pg-sql.com/"> pg-sql</a>
+                    </li>
+                    <li>
+                      <a class="dropdown-item" href="https://tcsglobal.udemy.com/course/sql-and-postgresql/learn/lecture/22800079#overview"> Course</a>
+                    </li>
+                    <li>
+                      <a class="dropdown-item" href="https://www.diffchecker.com/"> Difference Checker</a>
+                    </li>
+                    <li>
+                      <a class="dropdown-item" href="https://discord.com/channels/797239171730505839/797239171730505842"> Discord Channel</a>
+                    </li>
+                  </ul>
+                </li>
+                <li>
+                  <a target="_blank" href="https://themeforest.net/user/harnishdesign/#contact?ref=HarnishDesign">Support</a>
+                </li>
+                <span id="searching">
+                <form class="form-inline">
+                      <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search"
+                        id="search-input">
+                  </form>
+                </span>
+              </ul>
+            </div>
+          </div>
+        </nav>
+        <!-- Navbar End -->
+      </header>
+      <!-- Header End -->
+     
+      <div id="search-content"><!-- SEARCHABLE CONTENT START -->
+         <!-- Content   ============================ -->
+      <div id="content" role="main">
+        <!-- Sidebar Navigation 	============================ -->
+        <div class="idocs-navigation bg-light">
+          <ul class="nav flex-column">
+            <li class="nav-item">
+              <a class="nav-link active" href="#idocs_start">Getting Started</a>
+              <ul class="nav flex-column">
+                <li class="nav-item">
+                  <a class="nav-link" href="#idocs_knowledgebase">Knowledge Base</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="#idocs_structure">Structure</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="#idocs_reports">Reports</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="#idocs_trends">Trends</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="#idocs_business_trends">Business Trends</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="#idocs_the_company">The Company</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="#idocs_the_client">The Client</a>
+                </li>
+              </ul>
+             </li>
+
+             <!-- YEAR 2023 START -->
+
+             <li class="nav-item">
+              <a class="nav-link active" href="#idocs_start_23">Year 2023</a>
+              <ul class="nav flex-column">
+                <li class="nav-item">
+                  <a class="nav-link" href="#idocs_knowledgebase_23">Knowledge Base</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="#idocs_structure_23">Structure</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="#idocs_reports_23">Reports</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="#idocs_trends_23">Trends</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="#idocs_business_trends_23">Business Trends</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="#idocs_the_company_23">The Company</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="#idocs_the_client_23">The Client</a>
+                </li>
+              </ul>
+             </li>
+
+             <!-- YEAR 2023 END-->
+ 
+ 
+            <li class="nav-item">
+              <a class="nav-link" href="#idocs_faq">FAQ</a>
+            </li>
+               </ul>
+            </li>
+          </ul>
+        </div>
+        <!-- Docs Content	============================ -->
+
+        <div class="idocs-content">
+          <div class="container-fluid">
+            <!-- Getting Started 	============================ -->
+            <section id="idocs_start">
+              <h1>Knowledge Base</h1>
+              <h2>Learning and Documentation</h2>
+              <p class="lead">Lets gets started!!</p>
+              <hr />
+              <div class="row">
+                <div class="col-sm-6 col-lg-4">
+                  <ul class="list-unstyled">
+                    <li>
+                      <strong>Version:</strong> 1.0
+                    </li>
+                    <li>
+                      <strong>Author:</strong>
+                      <a href="https://devops-cloud-lrn.github.io/" target="_blank">Learning and Documentation</a>
+                    </li>
+                  </ul>
+                </div>
+                <div class="col-sm-6 col-lg-4">
+                  <ul class="list-unstyled">
+                    <li>
+                      <strong class="font-weight-700">Created:</strong> 3 February, 2023
+                    </li>
+                    <li>
+                      <strong>Update:</strong> 3 February, 2023
+                    </li>
+                  </ul>
+                </div>
+              </div>
+             <p class="alert alert-info"> If you have any questions that are beyond the scope of this help file, Please feel free to email via <a target="_blank" href="#">Item Support Page</a>. </p>
+            </section>
+            <hr class="divider" />
+            <!-- Latest Information		Knowledgebase ============================ -->
+            <section id="idocs_knowledgebase">
+              <h4>
+                <a href="./postgresql/postgresql.html" target="_blank">Knowledge - Till date</a>
+              </h4>
+            </section>
+            <hr class="divider" />
+            <!--  Structure 		============================ -->
+            <section id="idocs_structure">
+              <h4>Structure</h4>
+              <p class="alert alert-info"> If you need more information, please visit bootstrap site: <a target="_blank" href="https://getbootstrap.com/docs/4.4/layout/grid/">https://getbootstrap.com</a>
+              </p>
+            </section>
+            <hr class="divider" />
+            <!-- Reports		============================ -->
+            <section id="idocs_reports">
+              <h4>Reports</h4>
+            </section>
+            <hr class="divider" />
+            <!-- Trends 		============================ -->
+            <section id="idocs_trends">
+              <h4>Trends</h4>
+
+            </section>
+            <hr class="divider" />
+            <!-- Customization 		============================ -->
+            <section id="idocs_business_trends">
+              <h4>Business Trends</h4>
+            </section>
+            <hr class="divider" />
+            <!-- Logo Settings 		============================ -->
+            <section id="idocs_the_company">
+              <h4>The Company </h2>
+            </section>
+            <section id="idocs_the_client">
+              <h4>The Client </h2>
+            </section>
+
+
+  <!-- YEAR 2023 START -->
+
+
+           <!-- Year 2023  	============================ -->
+           <section id="idocs_start_23">
+            <h1>Knowledge Base -2023</h1>
+            <h2>Learning and Documentation -2023 </h2>
+            <p class="lead">Lets gets started!! - 2023</p>
+            <hr />
+            <div class="row">
+              <div class="col-sm-6 col-lg-4">
+                <ul class="list-unstyled">
+                  <li>
+                    <strong>Version:</strong> 1.0
+                  </li>
+                  <li>
+                    <strong>Author:</strong>
+                    <a href="https://devops-cloud-lrn.github.io/" target="_blank">Learning and Documentation - 2023 </a>
+                  </li>
+                </ul>
+              </div>
+              <div class="col-sm-6 col-lg-4">
+                <ul class="list-unstyled">
+                  <li>
+                    <strong class="font-weight-700">Created:</strong> 3 February, 2023
+                  </li>
+                  <li>
+                    <strong>Update:</strong> 3 February, 2023
+                  </li>
+                </ul>
+              </div>
+            </div>
+           <p class="alert alert-info"> If you have any questions that are beyond the scope of this help file, Please feel free to email via <a target="_blank" href="#">Item Support Page - 2023 </a>. </p>
+          </section>
+          <hr class="divider" />
+          <!-- Latest Information		Knowledgebase ============================ -->
+          <section id="idocs_knowledgebase_23">
+            <h4>
+              <a href="./postgresql/postgresql.html" target="_blank">Knowledge - 2023</a>
+            </h4>
+          </section>
+          <hr class="divider" />
+          <!--  Structure 		============================ -->
+          <section id="idocs_structure_23">
+            <h4>Structure 2023</h4>
+            <p class="alert alert-info"> If you need more information, please visit bootstrap site: <a target="_blank" href="https://getbootstrap.com/docs/4.4/layout/grid/">https://getbootstrap.com</a>
+            </p>
+          </section>
+          <hr class="divider" />
+          <!-- Reports		============================ -->
+          <section id="idocs_reports_23">
+            <h4>Reports 2023</h4>
+            <!-- <div>
+              <ol>
+                <li>
+                  <p class="question"> what are the various steps involved while executing an SQL in Postgres? </p>
+                  <p class="answer"> In PostgreSQL, there are primarily 4 steps 1. Parser It validates the syntax and creates a query tree from the query that is being written by the user. It will be handling the query-tree to Rewrite 2. Rewriter The query tree will be modified if needed so that query can be executed efficiently. Also if views are used they will be decomposed into underlying table references. 3. Planner The goal of the planner is to look at the query tree and figure out what data needs to be fetched and comes up with different plans and strategies that is best and fastest. For example, it will try to check if there are any indexes and see if there is any efficiency in using them vs pulling the data directly without using indexes etc. 4. Execute Run the Query </p>
+                </li>
+              </ol>
+            </div> -->
+
+          </section>
+          <hr class="divider" />
+          <!-- Trends 		============================ -->
+          <section id="idocs_trends_23">
+            <h4>Trends 2023</h4>
+
+          
+              <div class="alert alert-warning mb-4">
+              <!-- <span class="badge badge-danger text-uppercase">Note:</span> -->
+              <strong> Gartner Emerging Technologies and Trends Impact Radar.</strong>
+            </div>
+            <img src="assets/images/knowledgebase/gartner_emerging_technologies_trends.jfif" alt="Gartner Trends" />
+           
+            <!-- <div class="alert alert-success">  -->
+            <div class="justify">
+             <h5><strong> Categories  </strong></h5>
+             <ul>
+              <li>
+                <span class="big-font">Productivity Revolution</span><br/>
+               
+                <b><u> 0-1 Year </u> </b> <br/>
+                  <span class="text-primary"> <b>Edge Computer Vision (High) : </b></span>
+                  <p class="text-primary">Edge computer vision refers to the use of computer vision technologies and algorithms on devices located at the edge of a network, rather than in the cloud or a data center. 
+                    This allows for real-time image and video processing and analysis closer to the source of data, reducing latency and enabling faster decision-making in applications such as security, surveillance, 
+                    industrial automation, and autonomous vehicles.
+                  </p>
+                  <strong class="red">Edge computer vision can be used in a variety of applications, including:</strong><br/>
+                  <ul>
+                    <li>Industrial automation: for tasks such as quality control and inspection, object recognition and tracking.</li>
+                    <li>Surveillance and security: for real-time face and object recognition, monitoring and analysis of footage.</li>
+                    <li>Autonomous vehicles: for tasks such as object detection, lane detection, and traffic sign recognition.</li>
+                    <li>Healthcare: for medical imaging analysis, such as X-rays and MRIs.</li>
+                    <li>Retail: for tasks such as product identification and tracking, customer behavior analysis.</li>
+                    <li>Agriculture: for tasks such as plant and crop monitoring, and soil analysis.</li>
+                    <li>Robotics: for tasks such as object detection, navigation and manipulation.</li>
+                  </ul>
+                  <br/>
+
+                  
+                  <strong class="red"> Edge computer vision can be used in the property and casualty insurance industry in various ways, including:</strong>
+                    <ul>
+                      <li>Claims processing: for tasks such as damage assessment, estimating repair costs, and fraud detection.</li>
+                      <li>Surveys and inspections: for tasks such as building inspection, roof and exterior analysis, and identifying potential hazards.</li>
+                      <li>Underwriting: for tasks such as property evaluation, risk assessment and property classification.</li>
+                      <li>Customer service: for tasks such as real-time damage assessment and providing a virtual tour of the property.</li>
+                      <li>Fraud detection: for tasks such as identifying fake or altered images, detecting false or misleading information in insurance claims.</li>
+                    </ul>
+                    <br/>
+                     By using edge computer vision technologies, insurance companies can improve their operational efficiency, speed up claims processing and reduce costs, as well as enhance the customer experience.
+                  
+                  <br/><br/>
+                 <span class="text-primary"> <b>Edge AI (V High)</b></span>
+                 <p class="text-primary">
+                  Edge AI refers to the deployment of artificial intelligence algorithms and models at the edge of a network, close to the source of data, rather than in a centralized data center or the cloud. 
+                  Edge AI allows for real-time processing and decision making without relying on the cloud, reducing latency, and increasing privacy and security.
+                 </p>
+                 <strong class="red"> Edge AI can be used in a variety of industries and applications, including:</strong>
+                 <ul>
+                  <li>Industrial automation: for predictive maintenance, quality control and inspection, and process optimization.</li>
+                  <li>Healthcare: for medical imaging analysis, patient monitoring, and drug discovery.</li>
+                  <li>Retail: for tasks such as customer behavior analysis, inventory management, and product identification.</li>
+                  <li>Transportation: for tasks such as autonomous vehicles, traffic management and vehicle safety.</li>
+                  <li>Agriculture: for tasks such as precision farming, crop monitoring, and soil analysis.</li>
+                  <li>Security and surveillance: for tasks such as real-time face recognition, object detection, and monitoring.</li>
+                </ul>
+                <br/>
+                <strong class="red"> Edge AI can be used in the property and casualty insurance industry in several ways, including:</strong>
+                <ul>
+                  <li>Claims processing: for tasks such as damage assessment, estimating repair costs, and fraud detection.</li>
+                  <li>Surveys and inspections: for tasks such as building inspection, roof and exterior analysis, and identifying potential hazards.</li>
+                  <li>Underwriting: for tasks such as property evaluation, risk assessment, and property classification.</li>
+                  <li>Customer service: for tasks such as real-time damage assessment and providing a virtual tour of the property.</li>
+                  <li>Fraud detection: for tasks such as identifying fake or altered images, detecting false or misleading information in insurance claims.</li>
+                </ul><br/>
+                By using edge AI technologies, insurance companies can improve their operational efficiency, speed up claims processing, reduce costs, and enhance the customer experience. 
+                For example, edge AI algorithms can process images and videos captured by drones or other devices to perform real-time damage assessment and reduce the need for manual inspection. 
+                Additionally, edge AI can be used to analyze data from various sources to identify patterns and detect fraud, improving the accuracy and speed of the claims process.<br/>
+
+                 <b><u>1-3 Year	</u> </b> <br/>
+                 <p> Model Compression (LOW)<br/>
+                 </p> 
+
+                 <b><u>3-6 Year</u> </b> <br/>
+                 <p>Synthetic Data (High)<br/>
+
+                 </p> 
+
+                 <p>Generative AI (High)<br/> </p>
+                 <p>Intelligent Applications (V High)<br/> </p>
+
+
+                 <b><u>6-8 Year</u> </b> <br/>
+                 <p> Self-Supervised Learning (High)<br/></p>
+
+                  <strong>TOTAL : 7 </strong> <br/>
+
+                </li>
+
+
+              <li>
+                 <strong>Critical Enablers </strong><br/>
+
+                <b><u>1-3 Year	</u> </b> <br/>
+                <p> Knowledge Graphs (Low)<br/>
+                </p> 
+
+                <p> Blockchain (V High)<br/>
+                </p> 
+
+                <p> Foundation Models (V High)<br/>
+                </p> 
+
+                <p> Hyperautomation in Security (High)<br/>
+                </p> 
+
+
+                <b><u>3-6 Year</u> </b> <br/>
+                <p> Tokenization (V High)<br/>
+
+                </p> 
+
+                <p>Hyperscale Edge Computing (V High)<br/> </p>
+                <p>Web 3 ( High)<br/> </p>
+                <p>Neuromorphic Computing (High)<br/> </p>
+
+                <b><u>6-8 Year</u> </b> <br/>
+                <p> 6G (High)<br/></p>
+
+                 <strong>TOTAL : 9 </strong> <br/>
+
+              </li>
+              
+              <li> 
+                <strong>Transparency and Privacy </strong><br/>
+
+                <b><u>1-3 Year	</u> </b> <br/>
+                <p> Digital Ethics (High)<br/>
+                </p> 
+
+ 
+                <b><u>3-6 Year</u> </b> <br/>
+                <p>  Human Centered AI (High)<br/>
+
+                </p> 
+
+                <p>Responsible AI (High)<br/> </p>
+ 
+ 
+                <b><u>6-8 Year</u> </b> <br/>
+                <p> Decentralized Identity (High)<br/></p>
+
+                 <strong>TOTAL : 4 </strong> <br/>
+
+
+              
+              </li>
+              <li> <strong> Smart World </strong><br/>
+
+                <b><u>1-3 Year	</u> </b> <br/>
+                <p>Multimodal UI (High)<br/>
+                </p> 
+
+                <p>Digital Twins (V High)<br/>
+                </p> 
+
+                <b><u>3-6 Year</u> </b> <br/>
+                <p>Smart Space (High)<br/>
+
+                </p> 
+
+
+                <b><u>6-8 Year</u> </b> <br/>
+                <p> Metaverse (V High)<br/></p>
+                <p> Spatial Computing (High)<br/></p>
+                <p> Digital Human (AI Avatars)<br/></p>
+
+                 <strong>TOTAL : 6 </strong> <br/>
+
+              
+              </li>
+             </ul>
+ 
+              <b>Low - 2 Medium - 0  High - 15  V High - 9 </b>
+ 
+            </div>
+
+
+          </section>
+          <hr class="divider" />
+          <!-- Customization 		============================ -->
+          <section id="idocs_business_trends_23">
+            <h4>Business Trends 2023</h4>
+            <div class="alert alert-warning mb-4">
+              <strong> P&C Industry in US – Growth & Transformation trends.  Pls read and let me know in case you have any thoughts / additional pointers.</strong>
+            </div>
+            <strong class="red"> North American Property and Casualty (P&C) insurers are pursuing several growth and transformation initiatives, including:</strong>
+            <ul>
+              <li>Digital Transformation: P&C insurers are investing in digital technologies to modernize their operations, improve customer experiences, and streamline processes.</li>
+              <li>Customer-focused innovation: P&C insurers are exploring new products and services that are tailored to meet the specific needs of their customers.</li>
+              <li>Data and Analytics: P&C insurers are leveraging big data and analytics to improve their underwriting and claims processes, as well as to better understand customer behavior and preferences.</li>
+              <li>Telematics and IoT: P&C insurers are incorporating telematics and the Internet of Things (IoT) into their offerings to provide more personalized and targeted insurance solutions.</li>
+              <li>Cybersecurity: P&C insurers are prioritizing cybersecurity measures to protect their customers' personal information and prevent data breaches.</li>
+              <li>Sustainability: P&C insurers are focusing on sustainability and environmental responsibility, offering eco-friendly insurance products and investing in sustainable business practices.</li>
+              <li>Distribution channels: P&C insurers are exploring new distribution channels, including insurtech startups and online marketplaces, to reach customers in new and innovative ways.</li>
+              <li>Mergers and Acquisitions: P&C insurers are consolidating to increase market share and improve operational efficiency, as well as to acquire new capabilities and technologies.</li>
+              <li>Data driven Workflow and process automation: P&C insurers are incorporating data driven automation (one of the data points would be data collected via telematics) using various models.</li>
+              <li>A Digital Adoption Platform: P&C insurers are enabling a platform that is used to make the enterprise software adoption process seamless.</li>
+            </ul>
+            
+
+          </section>
+          <hr class="divider" />
+          <!-- Logo Settings 		============================ -->
+          <section id="idocs_the_company_23">
+            <h4>The Company 2023</h2>
+          </section>
+          <hr class="divider" />
+          <section id="idocs_the_client_23">
+            <h4>The Client 2023</h2>
+          </section>
+  <!-- YEAR 2023 END -->
+            <hr class="divider" />
+
+          <hr class="divider" />
+            <!-- FAQ ============================ -->
+            <section id="idocs_faq">
+              <h2>FAQ</h2>
+              <p class="text-4"> A FAQ is a list of frequently asked questions (FAQs) and answers on a particular topic. </p>
+            </section>
+            <hr class="divider" />
+            <!-- Source & Credits ============================ -->
+            <section id="idocs_source_credits">
+              <h2>Source & Credits</h2>
+            </section>
+            <hr class="divider" />
+            <!-- Support ============================ -->
+            <section id="idocs_support">
+              <h2>Support</h2>
+              <p> We are located in GMT +5:30 time zone and we answer all questions within 12-24 hours in weekdays. In some rare cases the waiting time can be to 48 hours. (except holiday seasons which might take longer). </p>
+              <div class="alert alert-warning mb-4">
+                <span class="badge badge-danger text-uppercase">Note:</span> While we aim to provide the best support possible, please keep in mind that it only extends to verified buyers and only to issues related to our template like bugs and errors. Custom modifications or third party module implementations are not included.
+              </div>
+              <div class="alert alert-success"> Please Add your Review (Opinion) for Our template. It would be a great support for us. <br /> Go to your <strong>Themeforest Profile</strong> > <strong>Downloads Tab</strong> > & then You can Rate & Review for our template. <br /> Thank You. </div>
+            </section>
+            <hr class="divider" />
+            <!-- More Templates 		============================ -->
+            <section id="idocs_templates">
+              <h2>More Templates</h2>
+            </section>
+            <hr class="divider" />
+            <!-- Changelog ============================ -->
+            <section id="idocs_changelog">
+              <h2>Changelog</h2>
+              <p class="text-4"> See what's new added, changed, fixed, improved or updated in the latest versions. </p>
+              <hr class="divider" />
+              <h3 id="v1-0"> Version 1.0 <small class="text-muted">(3 Jan, 2023)</small>
+              </h3>
+              <p>Initial Release</p>
+            </section>
+          </div>
+        </div>
+      </div> <!-- Content end -->
+    </div> <!-- SEARCHABLE CONTENT END -->
+      
+      <!-- Footer ============================ -->
+      <footer id="footer" class="section bg-dark footer-text-light">
+        <div class="container">
+          <p class="text-center"> Copyright &copy; 2023 <a href="#">Jai Saibaba</a>. All Rights Reserved. </p>
+          <p class="text-2 text-center mb-0"> Design &amp; Develop by <a class="btn-link" target="_blank" href="#">Jai Saibaba</a>. </p>
+        </div>
+      </footer>
+      <!-- Footer end -->
+    </div>
+    <!-- Document Wrapper end -->
+    <!-- Back To Top -->
+    <a id="back-to-top" data-toggle="tooltip" title="Back to Top" href="javascript:void(0)">
+      <i class="fa fa-chevron-up"></i>
+    </a>
+    <!-- JavaScript ============================ -->
+    <script src="/assets/vendor/jquery/jquery.min.js"></script>
+    <script src="/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <!-- Highlight JS -->
+    <script src="/assets/vendor/highlight.js/highlight.min.js"></script>
+    <!-- Easing -->
+    <script src="/assets/vendor/jquery.easing/jquery.easing.min.js"></script>
+    <!-- Magnific Popup -->
+    <script src="/assets/vendor/magnific-popup/jquery.magnific-popup.min.js"></script>
+    <!-- Custom Script -->
+    <script src="/assets/js/theme.js"></script>
+    <!--Syntax Highlight-->
+
+
+
+    
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+   var searchInput = document.querySelector("#search-input");
+   
+   searchInput.addEventListener("keyup", function () {
+       var searchTerm = this.value.toLowerCase();
+       console.log('values are ', searchTerm);
+       // var searchResults = document.querySelectorAll("[textContent*='" + searchTerm + "']");
+       $('#search-content').find("*").each(function(){
+           var search = $(this).text().toLocaleLowerCase();
+           if(search.indexOf(searchTerm) > -1){
+               $(this).show();
+           }
+           else{
+             // if(this.tagName == 'H2') {
+           if( $(this).is("[display]")) {
+              // display="true"
+               $(this).show();
+               console.log($(this).get(0));
+               console.log('tag-name' , this.tagName);
+              }else{
+               $(this).hide();
+              }
+              
+                                 
+           }
+   
+       });
+   
+   });
+
+  
+const $searchElement = $("#searching");
+let value = "";
+
+$(document).on("keyup", function(event) {
+  if (event.key !== "Enter") {
+    value += event.key;
+  } else {
+    if (value === "show") {
+      $searchElement.show();
+    } else if (value === "hide") {
+      $searchElement.hide();
+    }
+
+    value = "";
+  }
+  console.log(value);
+});
+
+
+
+</script>
+
+  </body>
+</html>
