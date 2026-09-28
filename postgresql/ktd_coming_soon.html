@@ -1,1 +1,595 @@
-Coming soon.
+# PROMPT 1 — SINGLE-RUN VERSION (Phase 1: WHAT)
+
+**How to use:** paste everything between the two markers as **one message** into a fresh chat with web research and file creation enabled. It contains the full brief plus a seven-step work order, so the model starts immediately.
+
+**What to expect (be ready for this):**
+- A single run this large will almost certainly hit output limits several times. That is normal: the prompt tells the model to stop at a clean boundary and resume when you reply **`continue`**. If it restarts or summarizes instead, reply: *"Continue from the last complete row. Do not restart or summarize."*
+- Priority under pressure is built in: dataset first, then XLSX, then DOCX.
+- There are no human review points between steps, so the model runs its own audits (completeness, AI-solutionism, sensitivity, arithmetic). **You should still spot-check** 10 random citations, every regulatory citation, and the Step 3 "Why AI" verdicts for five use cases you know well.
+- If quality drops late in the run, the staged version (`Prompt_1_Phase1_Use_Case_Inventory.md`) is the fallback; nothing in the single-run prompt conflicts with it.
+- The optional international-analogue scan (Stage X) is intentionally left out of the single-run version; it remains in the staged file.
+
+---
+
+▼▼▼ PASTE FROM HERE ▼▼▼
+
+# U.S. HEALTHCARE PAYER AI OPPORTUNITY DISCOVERY, INVENTORY & PRIORITIZATION
+## Single-Run Brief — Phase 1 ("WHAT")
+
+## 0. SINGLE-RUN EXECUTION PROTOCOL (read first)
+
+This message is a **complete, single-run instruction**. **Begin work immediately with Step 1 of the Work Order (Section 23).** Do not wait for further instructions and do not ask clarifying questions; where something is ambiguous, state an assumption and proceed.
+
+- **Sequence:** complete Steps 1–7 of the Work Order in order. The numbered sections above Section 23 are the standards you apply; Section 23 says what to produce in each step.
+- **Output handling:** if a response reaches its length limit, stop at a clean boundary (end of a table row or section), label it "Part X — Step N", and end with one line naming the exact next item. When I reply "continue", resume exactly there. Never restart, re-summarize or compress earlier material.
+- **Priority under constraint:** if output, tool or context limits force trade-offs, protect in this order: (1) canonical dataset accuracy and completeness, (2) the XLSX, (3) the DOCX narrative. Never silently shorten or drop anything: state plainly what was reduced and why.
+- **Working dataset:** if you have file or code tools, keep the canonical dataset as a working CSV file and append to it after each step so it is never lost to context limits. Still show me each step's key results in chat, in compact form.
+- **Progress notes:** end each step with a compact STATUS line (5 lines maximum: step done, counts of use cases and sources, open issues). No long recaps.
+- **Ledgers:** maintain a Source Ledger (S-001, S-002 …) and a Running Use-Case Index (ID | Name | Domain). Never renumber or reuse IDs.
+- **Built-in checkpoints (you run these yourself, since I am not reviewing between steps):** completeness audit (Step 2d), AI-solutionism audit (Step 3c), sensitivity test (Step 4), arithmetic recomputation and citation re-verification (Step 5).
+- **Date:** today is **September 28, 2026**. Prioritize 2025–2026 evidence; keep older regulatory and standards material where still applicable. Date-stamp every time-sensitive claim with the date you verified it.
+- **Files:** in Steps 6 and 7, create real files with your file-creation/code tools. If unavailable, output the workbook as CSV blocks of at most 40 rows and the report as Markdown.
+
+## 1. ROLE
+
+Act as a senior: U.S. Healthcare Payer Domain Strategist; Healthcare Payer Industry Researcher; Enterprise Architect; Solution Architect; AI/Technology Strategist; Technology Innovation Strategist; Business Transformation Strategist.
+
+Conduct a **deep, evidence-based research study** of the **United States healthcare payer business and technology landscape**. This is **Phase 1 — WHAT**: discover meaningful payer problems, convert them into a structured AI use-case inventory, evaluate value, innovation, AI fit, maturity, feasibility and risk, and identify the strongest candidates for a later **Phase 2 — HOW** (architecture and implementation).
+
+## 2. CORE OBJECTIVE AND QUESTIONS
+
+Build a comprehensive, evidence-backed **U.S. Healthcare Payer AI Opportunity Inventory** that answers:
+
+1. What significant current and emerging problems face U.S. payers?
+2. What business and technology use cases arise from them?
+3. Which have meaningful potential for AI-enabled transformation?
+4. Which forms of AI fit each, and in what role?
+5. Why AI, and why now?
+6. Where are conventional IT, rules, workflow, RPA, analytics or traditional ML the better answer?
+7. What type of innovation could AI create (not only faster/cheaper)?
+8. What value is realistic, and how well is it evidenced?
+9. What prerequisites and dependencies exist?
+10. How mature is the industry at applying AI to it?
+11. How do value and feasibility differ across enterprise archetypes?
+12. What are the AI limitations and anti-patterns?
+13. Which use cases should go to Phase 2 for detailed architectural analysis?
+
+**Start with the real payer problem, never with an AI technology.** Determine whether AI materially changes the solution.
+
+## 3. STRICT DOMAIN SCOPE
+
+**U.S. Healthcare Payers / Health Insurers only.** Include where relevant: Commercial (fully insured and ASO/self-funded), Medicare (incl. Part D), Medicare Advantage, Medicaid (FFS and Managed Care), CHIP, ACA/Qualified Health Plans, and other significant U.S. payer models.
+
+Focus on payer-specific business, operations, processes, technology, enterprise architecture, data, integration, transformation, regulation/compliance and AI adoption.
+
+Do NOT drift into a generic "AI in healthcare" study. Provider, hospital, pharma and life-sciences topics are in scope only where they directly affect payer operations, payer–provider interaction, ecosystem integration or payer economics.
+
+## 4. CONCEPT HIERARCHY (keep these distinct)
+
+**External Driver → Problem Domain → Problem → Use Case → AI Opportunity → AI Pattern → Solution**
+
+- A regulation is an *external driver*. Interoperability is a *problem domain*. Data exchange, member matching, mapping or API enablement are *use cases*. AI is an *opportunity/enabler*. "Agentic AI" or "System One model" is an *AI pattern*. The architecture is a **Phase 2** concern.
+- "Implement AI" is NOT a valid problem statement. A valid problem statement describes a real business, operational, process, technology, regulatory or strategic problem.
+
+## 5. RESEARCH AND EVIDENCE RULES
+
+**Source priority:** (1) U.S. government (CMS, HHS, ONC/ASTP, NIST, FTC, state DOIs); (2) NAIC; (3) HL7 and recognized standards bodies; (4) peer-reviewed research and Health Affairs–grade research; (5) payer filings, investor materials and disclosures; (6) credible industry research; (7) consulting research; (8) vendor materials.
+
+**Evidence tags** — apply one to every major claim:
+`REG` regulation/legal text · `PRAC` documented industry practice · `RES` research evidence · `VEND` vendor claim · `ANLY` analyst interpretation · `INF` inference · `ASSUME` assumption.
+
+**Rules**
+- Cite every major factual claim; log it in the Source Ledger. Never treat vendor marketing as independent evidence. Vendor benchmark multiples are `VEND`, never fact.
+- **Never invent** sources, statistics, vendor capabilities, product names or financial benefits. If you cannot verify something, say so and tag it `INF` or `ASSUME`.
+- Litigation: distinguish **allegations from findings**; state the current procedural status and date verified.
+- Treat SEO blog posts and aggregators as low-quality; prefer primary documents. Say when a source is secondary.
+- State uncertainty explicitly where evidence conflicts; do not resolve it artificially.
+- Separate: observed/measured value · evidence-supported estimate · analyst inference · strategic value · option value · assumptions.
+
+**Seed drivers (verify against primary sources before using; do not assume they are complete or current):**
+- CMS Interoperability and Prior Authorization Final Rule (CMS-0057-F): prior-authorization decision timeframes and related operational requirements beginning January 1, 2026; API requirements (Patient Access, Provider Access, Payer-to-Payer, Prior Authorization API) with a January 1, 2027 compliance milestone; public reporting of prior-authorization metrics. Confirm exact scope by payer type, dates and current status.
+- Federal and state Medicaid changes affecting enrollment, eligibility and financing; Medicare Advantage market and payment dynamics; rising medical cost trend; provider-directory accuracy scrutiny; regulatory and legal attention to algorithm use in coverage/utilization decisions. Discover and verify the current specifics yourself.
+
+## 6. PROBLEM-SPACE DISCOVERY
+
+Identify the significant current and emerging problem areas for U.S. payers. Consider (non-exhaustively): regulatory and legislative change; interoperability; administrative burden; rising cost of care; payment integrity; fraud, waste and abuse; member expectations; provider friction; prior authorization; utilization management; claims complexity; workforce constraints; data fragmentation; legacy technology and technical debt; mergers and acquisitions; application complexity; cloud and digital transformation; competition; Medicaid market change; Medicare dynamics; product complexity; margin pressure; regulatory reporting; security and privacy; enterprise modernization; and AI adoption itself (governance, model risk, talent, cost).
+
+Do NOT assume every item is meaningful. Research the evidence and decide which matter. **Discover additional problem areas not listed.** Record what you discarded and why.
+
+## 7. BUSINESS TAXONOMY (initial, not fixed — discover more)
+
+Product design; product configuration; marketing; pricing; actuarial support; sales; distribution; enrollment; eligibility; member onboarding; billing; premium administration; payments; claims intake, adjudication and payment; payment integrity; fraud, waste and abuse / SIU; risk adjustment; utilization management; prior authorization; appeals; grievances; care management (disease, case, clinical/medical); quality management and Star/HEDIS programs; pharmacy; provider network management, credentialing, contracting and provider directory; provider experience; member experience; contact center; digital engagement; personalization; population health / SDOH; corporate and shared services; finance; compliance; regulatory operations and reporting; enterprise operations.
+
+## 8. TECHNOLOGY TAXONOMY (initial, not fixed — discover more)
+
+Product lifecycle management; requirements engineering; software development lifecycle; architecture and enterprise architecture governance; application development; code generation; code modernization; testing and test automation; test data generation; synthetic data; PHI/PII masking, redaction and data synthesis; data quality, lineage, discovery and integration; master data management (member and provider) and identity resolution / member matching; Data and AI/MLOps platforms; API development and management; interoperability (FHIR, payer interoperability); enterprise integration and event integration; shared technical services; technology lifecycle management; infrastructure; cloud and cloud landing zones; platform engineering; security, identity, access and zero-trust; network; observability and SRE; application, mainframe and COBOL modernization; monolith-to-microservices; legacy-to-cloud; application migration; technical-debt reduction; technology portfolio management; IT operations; AI governance and model-risk management.
+
+**Classify every technology use case** as: **Highly payer-specific** / **Healthcare-specific** / **Generic enterprise technology** (e.g., PHI/PII masking and production-like synthetic test data are payer-specific; wiring an AI assistant into IDE/GitHub is generic). Generic use cases are included only where meaningfully relevant to payer transformation.
+
+## 9. ENTERPRISE ARCHETYPES
+
+Do not assume one payer architecture. For each applicable use case, assess how **value, feasibility, architecture, implementation complexity, time-to-value, prerequisites and AI readiness** change across: greenfield/digital-native; modern cloud-enabled; legacy brownfield; highly fragmented legacy; post-merger/multi-acquisition; high technical-debt; data-mature; data-fragmented.
+
+## 10. AI LANDSCAPE — DO NOT LIMIT TO AGENTIC AI
+
+Evaluate: generative AI; predictive/classical ML; reasoning models; multimodal AI; small and specialized models; fast-inference and structured-decision models; conversational AI; human+AI collaboration; AI-assisted automation; agentic and multi-agent systems; AI orchestration; retrieval-augmented generation; model routing and multi-model architectures; semantic translation/mapping; AI embedded in applications and in engineering toolchains; AI + rules; AI + deterministic software; hybrids.
+
+For each technology assess: capability, applicability, production maturity, industry evidence, payer relevance, accuracy, latency, cost, infrastructure needs, security, privacy, explainability, governance, limitations. Classify maturity: Proven / Production-emerging / Emerging / Experimental / Uncertain. **Do not recommend a technology because it is new.**
+
+**System One models (explicit research target).** TypeSafe AI's **Jev** — announced in early access on September 15, 2026 — is described as a "System One" model returning typed decisions with calibrated probabilities/confidence rather than generated text. Treat it as a new technology with **no assumed payer-production evidence**:
+- Separate (a) properties documented in vendor docs, (b) vendor performance claims (speed/cost/accuracy multiples — never cite as fact), and (c) independent evidence.
+- Test directly: **how does it differ from a fine-tuned small classifier or embedding+classifier pipeline for the same task?**
+- Assess fit for high-volume bounded decisions (classification, routing, triage, extraction-with-confidence, prioritization) with confidence-threshold escalation to a reasoning model or a human.
+- Assess limits: text-only input (currently), no natural-language explanation of decisions, calibration validity on payer data, "schema-valid ≠ correct," early-access vendor and ecosystem maturity.
+- Label all payer applications as **hypotheses** unless independent payer evidence exists.
+- Distinguish the TypeSafe product category from the generic Kahneman "System 1 vs System 2" analogy and from generic classical ML classifiers.
+
+## 11. AI ROLE TAXONOMY
+
+Assistant · Augmentor · Accelerator · Decision support · Decision engine · Automation layer · Collaboration layer · Orchestration layer · Integration/semantic layer · Core application capability · Core architecture capability · New enterprise capability · Transformation mechanism. Justify the choice for each use case.
+
+## 12. MANDATORY "WHY AI?" TEST
+
+For every significant use case answer: Why AI? Why now? What does AI uniquely enable? Why not conventional software / rules / workflow / RPA / traditional analytics / traditional ML? Does AI materially improve speed, cost, quality, experience? Does it enable a net-new capability? Is AI actually necessary?
+
+Assign an **AI_Verdict**: **AI Essential** · **AI Material Improvement** · **AI Marginal** · **AI Not Justified**. "AI is not justified" is a valid and valuable finding. Do not force AI into every use case. After Step 3, report the verdict distribution; if fewer than about 10% are Marginal/Not Justified, re-audit for AI-solutionism.
+
+## 13. INNOVATION FRAMEWORK (broader than "faster and cheaper")
+
+Tag each use case with all relevant types:
+- **Efficiency:** cost, productivity, speed, throughput
+- **Quality:** accuracy, consistency, defect reduction
+- **Experience:** member, provider, employee, broker/partner; NPS/CSAT; friction
+- **Decision:** prediction, classification, prioritization, recommendation, decision support/automation
+- **Capability:** net-new; previously impractical; previously uneconomic
+- **Operating model:** human+AI models; work reallocation; process redesign; workforce leverage
+- **Technology/Architecture:** simplification, modernization acceleration, technical-debt reduction, legacy bridging, integration innovation, engineering productivity, resilience
+- **Risk/Compliance:** continuous controls, monitoring, auditability, privacy/security, **regulatory velocity** (speed of adapting to new mandates)
+- **Strategic:** new channels/products, ecosystem leverage, differentiation, structural advantage, strategic optionality/platform leverage, data flywheel effects
+
+## 14. VALUE FRAMEWORK
+
+Assess: **Financial** (administrative cost, medical cost/MLR, revenue, leakage, payment integrity, avoided cost, capacity) · **Operational** (cycle time, throughput, straight-through processing, FTE capacity, rework, exceptions) · **Quality** · **Experience** · **Strategic** · **Technology** (technical-debt reduction, legacy retirement, architecture simplification, engineering productivity, reuse) · **Risk** (compliance, privacy, security, auditability, resilience). Never manufacture financial benefits; give ranges only with evidence and stated assumptions, and avoid double-counting.
+
+## 15. MATURITY FRAMEWORK
+
+Rate each relevant use case on: AI technology; AI industry; U.S. payer AI; use-case; data; integration; AI platform; governance; security/privacy; workforce; operating model; vendor ecosystem; economic maturity.
+
+Scale: **M1 Experimental** · **M2 Emerging** (pilots) · **M3 Early production** (few reference deployments) · **M4 Established** (widely deployed) · **M5 Commoditized/standard**. Explain the evidence behind each rating.
+
+## 16. AI ANTI-PATTERNS
+
+For every major use-case domain state where AI should **NOT** be used. Consider: deterministic software or rules or workflow being sufficient; complexity exceeding incremental value; inadequate or poor-quality data; volume too low; excessive AI cost; unacceptable latency; risk too high; inadequate explainability; unclear accountability; agentic architecture as over-engineering; a large model where a small one suffices; immature models; excessive vendor lock-in; human oversight becoming the bottleneck; optimizing the wrong bottleneck; automating a broken process; **nominal human-in-the-loop (automation bias)**; **algorithmic estimates displacing clinical judgment**; **batch adverse decisions without individualized review**; **historical-bias amplification**; **deterministic tasks (benefit or payment calculation) given to probabilistic models**; **POC purgatory and integration-cost blindness**.
+
+**Use documented precedent** (verify current status; separate allegations from findings): litigation involving UnitedHealth/naviHealth's nH Predict and Humana over post-acute coverage decisions in Medicare Advantage; litigation involving Cigna's PxDx over batch denials without individualized physician review; CMS guidance on algorithm use in MA coverage determinations; state laws restricting AI-only adverse determinations in utilization review (identify and verify which exist).
+
+Explicitly answer: **Where should we NOT use AI?**
+
+## 17. GATES AND SCORING
+
+### 17.1 Hard gates (applied BEFORE weighted scoring)
+Status for each: **Pass / Conditional / Fail / N-A**. A **Fail** caps Overall_Score at **50** and flags the use case regardless of its weighted result. **Conditional** requires stated conditions and a flag but no cap.
+- **G1 — Adverse-decision defensibility:** if AI output influences a member- or provider-adverse determination (denial, reduction, termination of coverage or service), can the decision be reconstructed, explained and reviewed by a qualified human with genuine authority and capacity to override?
+- **G2 — PHI/PII handling:** can it operate within HIPAA-compliant handling (BAA coverage, minimum necessary, no unapproved PHI flow to third-party models)?
+- **G3 — Regulatory conflict:** does it conflict with federal or state rules on algorithms/AI in coverage, utilization or claims decisions?
+
+### 17.2 Criteria, scale and default weights
+Score each criterion **1–5** (1 = very low, 3 = moderate, 5 = very high; define concrete anchors for 1, 3 and 5 per criterion). **Risk_Score polarity: 5 = lowest implementation/downside risk**, so higher always contributes positively.
+
+**A. Opportunity Attractiveness (100 points)** — Business Value 20 · Technology Value 10 · AI Leverage 15 · Innovation Potential 10 · Strategic Value 15 · Experience Value 10 · Risk/Compliance Value (value created by reducing risk) 10 · Architecture Leverage 5 · Scalability 5.
+
+**B. Realization Readiness (100 points)** — Time-to-Value 15 · Feasibility 20 · Data Readiness 20 · Industry Maturity 10 · AI Maturity 15 · Risk_Score 10 · Evidence Strength 10.
+
+**Formulas:** `Attractiveness = Σ(weight × score/5)` (0–100); `Readiness` likewise; `Overall = 0.6 × Attractiveness + 0.4 × Readiness`; then apply gate cap. Weights above are defaults: you may propose changes only with written justification and only in Step 4, and must keep the two-composite structure.
+
+For every criterion provide: definition, scale anchors, weight, score, rationale, evidence tag, confidence (High/Medium/Low). Show the calculation. Do not present scores as objective truth: they are a structured synthesis of evidence and expert analysis.
+
+### 17.3 Sensitivity
+Test rankings under at least three alternate weightings (e.g., Experience ×2; Readiness-heavy; Strategic-heavy). Report which use cases are robust and which are fragile.
+
+## 18. CANONICAL MASTER DATASET (source of truth)
+
+**One unique row per use case**, ID format `UC-001`, `UC-002` … Everything else (XLSX, DOCX, shortlist) derives from this dataset. Use controlled vocabularies exactly as defined.
+
+**Identity & problem:** Use_Case_ID · Use_Case_Name · Primary_Domain · Sub_Domain · Business_or_Technology · Payer_Specificity (Highly payer-specific / Healthcare-specific / Generic enterprise) · Line_of_Business (MA, Medicaid MCO, Medicaid FFS, Commercial fully insured, Commercial ASO, ACA/QHP, CHIP, Medicare other, All) · Problem_Statement · External_Driver · Why_Now · Detailed_Use_Case · Current_State_Challenge · Target_Outcome · Impacted_Stakeholders · Enterprise_Archetype (relevance and effect)
+
+**AI fit:** AI_Opportunity · AI_Pattern (Predictive/Classical ML · Generative AI · Reasoning model · System One decision model · Conversational AI · Multimodal · Small/specialized model · RAG · Agentic · Multi-agent · Human+AI collaboration · AI+rules hybrid · AI+deterministic software · Semantic mapping/translation · Engineering-toolchain AI · None) · AI_Role (Section 11 list) · AI_Verdict · Why_AI · Why_Not_Conventional_IT · Innovation_Type · Value_Dimensions · Value_Evidence (with tags)
+
+**Readiness:** Prerequisites · Data_Requirements · Integration_Requirements · Industry_Maturity (M1–M5) · Payer_Maturity (M1–M5) · AI_Maturity (M1–M5) · Data_Readiness · Architecture_Readiness
+
+**Risk & discipline:** AI_Limitations · Anti_Patterns · Risks · Gate_G1 · Gate_G2 · Gate_G3 · Human_Override_Integrity (Strong / Adequate / Weak / N-A) · Evidence (Source Ledger IDs with tags) · Evidence_Confidence
+
+**Scores:** Business_Value_Score · Technology_Value_Score · AI_Leverage_Score · Innovation_Score · Strategic_Value_Score · Experience_Value_Score · Risk_Compliance_Value_Score · Architecture_Leverage_Score · Scalability_Score · Time_to_Value_Score · Feasibility_Score · Data_Readiness_Score · Industry_Maturity_Score · AI_Maturity_Score · Risk_Score · Evidence_Strength_Score · Attractiveness_Score · Readiness_Score · Overall_Score · Score_Rationale
+
+**Prioritization:** Priority_Flags (Section 20) · Phase_2_Candidate (Y / N / Shortlist category) · Phase_2_Rationale
+
+## 19. QUALITY CONTROL
+
+Before finalizing: (1) no duplicate/overlapping use cases; (2) unique IDs; (3) each entry is a specific problem/opportunity, not a generic theme; (4) AI not assumed as the solution; (5) payer specificity explicit; (6) technology use cases labeled payer-specific/healthcare-specific/generic; (7) value not double-counted; (8) scoring logic consistent and arithmetic reproducible; (9) every score has rationale; (10) important claims have evidence; (11) evidence gaps identified; (12) uncertainty identified; (13) "do not use AI" cases identified; (14) allegation/finding language checked; (15) vendor claims tagged `VEND`.
+
+## 20. PRIORITIZATION AND PHASE 2 SHORTLIST
+
+Do not rank by a single number. Flag use cases that are: high business value; high AI leverage; high innovation potential; high strategic value; high technology value; high feasibility; fast time-to-value; high modernization leverage; **and** the special cases — highly valuable but immature; highly innovative but difficult; highly feasible but low differentiation; strategically important but dependent on future technology; **better suited to conventional IT**.
+
+Shortlist lists: **A** Highest overall opportunity · **B** Highest AI differentiation · **C** Highest technology/modernization leverage · **D** Highest near-term feasibility. Then propose a **balanced set of 2–3 Phase 2 candidates** (not simply the top three scores; no failed gate) ideally spanning business transformation, technology transformation and AI-enabled capability innovation. For each: ID, name, Overall score, key value, AI differentiation, maturity, major prerequisites, major risks, why it merits a Phase 2 deep dive.
+
+## 21. FINAL DELIVERABLE SPECIFICATIONS (used in Steps 6 and 7)
+
+Both files are generated **from the frozen canonical dataset** so IDs, scores, weights, rationale and evidence stay identical.
+
+**XLSX — "U.S. Healthcare Payer AI Use-Case Scorecard.xlsx"** (professional, filterable, frozen headers, data validation on controlled vocabularies). Sheets: 0 README/Legend · 1 Use-Case Inventory · 2 Scoring Model (all criteria, definitions, anchors, weights, gate rules — **weights live here and drive formulas**) · 3 Detailed Scoring Matrix (use case × criterion: raw, weight, weighted, totals, confidence, rationale) · 4 Value Assessment · 5 AI Pattern Mapping (use case × pattern × role) · 6 Maturity Assessment · 7 Enterprise Archetype · 8 AI Anti-Patterns (incl. "do not use AI") · 9 Evidence/Sources (traceability) · 10 Phase 2 Shortlist. Do not hide assumptions inside formulas; all weights and logic must be visible and editable.
+
+**DOCX — "U.S. Healthcare Payer AI Use-Case Inventory.docx"** (executive quality). Sections: Executive Summary; Research Methodology; U.S. Healthcare Payer Landscape; Major Current Problem Areas; Emerging Problem Areas; Business Use-Case Inventory; Technology Use-Case Inventory; Payer-Specific vs Generic Technology Opportunities; Enterprise Archetype Analysis; AI Technology Landscape; AI Role Taxonomy; Innovation Framework; Value Framework; Maturity Framework; AI Anti-Patterns; Prioritized Use-Case Analysis; Top Candidates for Phase 2; Key Findings; Evidence Gaps/Uncertainties; Sources. Each significant use case gets a **Use-Case Card**: ID; name; area; subdomain; problem; external driver/why now; current-state challenge; detailed description; stakeholders; payer specificity; LOB; archetype relevance; AI opportunity; candidate AI technologies; AI role; AI verdict; why AI; why not conventional IT; innovation type; value dimensions; prerequisites; data and integration requirements; maturity; gates; risks; anti-patterns; evidence and confidence; overall score with top contributing dimensions; rationale; Phase 2 suitability.
+
+## 22. SUCCESS CRITERIA
+
+**Breadth** (target **≥50 distinct, meaningful, non-duplicative, evidence-backed use cases**, deliberately including non-obvious ones across business, technology, modernization, interoperability, data, enterprise architecture, engineering, operations, experience, compliance and net-new capability) · **Depth** · **AI discipline** (including honest "AI not justified" findings) · **Innovation beyond cost/speed** · **Payer specificity** · **Technology coverage** · **Enterprise context** (greenfield to post-merger) · **Evidence** · **Transparent quantification** · **Anti-hype** · **Phase 2 readiness**.
+
+**Do not inflate the inventory to meet 50.** Every entry needs a distinct problem and a clear rationale. Do not prematurely narrow: the scorecard, not intuition, drives filtering to the final 2–3.
+
+The end-to-end arc is: *discover the U.S. payer problem space → identify specific use cases → determine where AI materially helps → evaluate value, innovation, maturity, feasibility, risk → build a defensible master inventory → score → select 2–3 candidates for Phase 2.*
+
+---
+
+## 23. WORK ORDER (execute in this order without waiting for approval)
+
+### Phase 1 — Landscape
+
+STEP 1 — Landscape and Problem Space.
+
+Deliver:
+1. **Methodology note** (half a page): search strategy, source priorities, evidence tags, limits.
+2. **External Driver Register (ED-01…):** for each driver — name, type (regulation / market / technology / economic / legal), what it requires or changes, affected payer types and LOBs, key dates, current status, source(s) with tags, date verified. Verify and expand the seed drivers in Section 5 (including CMS-0057-F against CMS.gov) and discover others.
+3. **Problem-Domain Register (PD-01…):** for each domain — problem description in payer terms, which drivers cause it, who is affected, evidence of significance, evidence tag, whether it is current or emerging. Go beyond the Section 6 list; state which listed items you judged NOT significant and why.
+4. **Domain-to-taxonomy map:** show which Section 7 and 8 taxonomy areas each problem domain touches, and any new areas you propose adding.
+5. **Source Ledger v1** (S-001…).
+6. **Candidate seed list:** up to 30 provisional use-case *ideas* as one-line problem statements (no IDs, no scoring), to guide Step 2.
+
+Do not create use cases with IDs yet. Write a STATUS line and continue.
+
+### Phase 2 — Inventory build (identity and problem fields only; IDs start at UC-001)
+
+STEP 2a — Inventory batch 1: Core operations.
+
+Create use cases (IDs starting UC-001) for: enrollment and eligibility; member onboarding; billing and premium administration; payments; claims intake, adjudication and payment; payment integrity; fraud, waste and abuse/SIU; risk adjustment; pricing and actuarial support; product design/configuration.
+
+Rules: each use case must be a specific process-level problem with one measurable target outcome (not "AI for claims"). Populate the Identity & Problem fields from the schema, including Line_of_Business, Payer_Specificity and Enterprise_Archetype relevance. Do NOT fill AI-fit or score fields yet. Tag evidence. Aim for depth and specificity over count; do not pad.
+
+Add these to the Running Use-Case Index, then write a STATUS line and continue.
+
+STEP 2b — Inventory batch 2: Clinical, member, provider and corporate.
+
+Continue numbering. Cover: utilization management; prior authorization (including CMS-0057-F–driven work); appeals and grievances; care/case/disease management and population health/SDOH; quality management and Stars/HEDIS; pharmacy; provider network, credentialing, contracting and provider directory accuracy; provider experience; member experience, contact center and digital engagement; personalization; sales, distribution and marketing; finance, compliance, regulatory operations and reporting; corporate and shared services.
+
+Same rules as B1. Check every new use case against the Running Index for duplicates. Add these to the Running Index, then write a STATUS line and continue.
+
+STEP 2c — Inventory batch 3: Technology, data, modernization and engineering.
+
+Continue numbering. Cover the full Section 8 technology taxonomy: SDLC (requirements to production), code generation and modernization, testing and test automation, PHI/PII masking/redaction and synthetic data, data quality/lineage/discovery, master data and member/provider identity resolution, API and interoperability engineering (FHIR), enterprise integration, platform engineering and cloud landing zones, mainframe/COBOL modernization, monolith-to-microservices, application migration, technical-debt reduction, security/identity/zero-trust, observability/SRE, IT operations, enterprise architecture governance, technology portfolio management, AI governance and model-risk management.
+
+For EACH, set Payer_Specificity (Highly payer-specific / Healthcare-specific / Generic enterprise) and justify it in one line. Add these to the Running Index, then write a STATUS line and continue.
+
+STEP 2d — Inventory batch 4: Hidden, cross-functional and AI-native opportunities; completeness audit.
+
+Search for opportunities NOT yet covered: cross-functional use cases spanning several domains; AI-native capabilities that were previously impractical or uneconomic; convergence opportunities (e.g., interoperability data enabling clinical-policy automation); regulatory-velocity capabilities; workforce-leverage models; resilience/failure-domain reduction on legacy estates; ecosystem/partner opportunities.
+
+Then run a **completeness audit**: (a) coverage matrix of taxonomy areas × LOBs × archetypes showing gaps; (b) near-duplicate check across all IDs, merging or deleting as needed (report what you merged); (c) confirm the total is at least 50 *without padding*. If honest coverage is below 50, say so and explain rather than inflating. Reprint the final Running Index in full (compact table), then write a STATUS line and continue.
+
+### Phase 3 — Technology landscape, enrichment and AI-solutionism audit
+
+STEP 3a — AI technology and pattern landscape.
+
+Deliver a technology assessment table covering every technology in Section 10 (including System One models such as Jev, RAG, model routing, small/specialized models, reasoning models, agentic and multi-agent systems, AI+rules hybrids). For each: capability, applicability to payer work, maturity class (Proven / Production-emerging / Emerging / Experimental / Uncertain), evidence (tagged), accuracy/latency/cost/infrastructure/security/privacy/explainability/governance notes, key limitations, and payer relevance.
+
+For System One/Jev, follow the Section 10 rules exactly: separate documented properties, vendor claims and independent evidence; answer the "vs. fine-tuned small classifier" question; list hypothesized payer fits as hypotheses only; state the explainability and calibration limits.
+
+Also deliver a compact **AI pattern selection guide**: when each pattern is right, when it is an anti-pattern, and when conventional IT wins. Write a STATUS line and continue.
+
+STEP 3b — Enrichment of ALL use cases (work in batches of about 12–15 per response part).
+
+For every use case populate the AI-fit, Readiness and Risk & discipline field groups: AI_Opportunity, AI_Pattern, AI_Role, AI_Verdict, Why_AI (structured answers to the Section 12 test), Why_Not_Conventional_IT, Innovation_Type, Value_Dimensions and Value_Evidence (tagged; separate observed vs estimated vs inferred), Prerequisites, Data_Requirements, Integration_Requirements, Industry/Payer/AI maturity (M1–M5 with evidence), Data_Readiness, Architecture_Readiness, AI_Limitations, Anti_Patterns (including any matching precedent from Section 16), Risks, Human_Override_Integrity, Gate_G1–G3 preliminary status, Evidence and Evidence_Confidence. Note explicitly how the enterprise archetype changes value and feasibility.
+
+Honor the Section 12 verdicts honestly, including AI Marginal and AI Not Justified. Output as table/CSV in sub-parts if needed. Write a STATUS line with running verdict counts and continue.
+
+STEP 3c — AI-solutionism audit.
+
+Report the AI_Verdict distribution across the whole inventory. Re-audit the 15 use cases with the weakest "Why not conventional IT" reasoning; apply the stop conditions from Section 16; downgrade verdicts where warranted and show before/after. List every use case where conventional IT, rules, workflow or traditional ML is the better answer. Write a STATUS line and continue.
+
+### Phase 4 — Gates, scoring, prioritization and shortlist
+
+STEP 4 — Gates, scoring, prioritization and shortlist.
+
+1. **Scoring Model:** restate the 16 criteria with definitions and concrete 1/3/5 anchors, the default weights from Section 17.2, and the formulas. Propose weight changes only with written justification.
+2. **Gates:** finalize G1–G3 status per use case with one-line reasons.
+3. **Scores:** for every use case, score every criterion with rationale, evidence tag and confidence; compute Attractiveness, Readiness, Overall and the gate cap. Deliver as a table/CSV in sub-parts. Show one fully worked calculation.
+4. **Sensitivity test** (Section 17.3): three alternate weightings; list robust and fragile rankings.
+5. **Prioritization views** (Section 20): all flag lists including the special cases (valuable-but-immature, innovative-but-difficult, feasible-but-undifferentiated, dependent-on-future-tech, better-suited-to-conventional-IT).
+6. **Phase 2 shortlist:** lists A–D, then the balanced 2–3 with the required fields.
+7. **Major findings** and **evidence gaps/uncertainties.**
+
+Write a STATUS line and continue.
+
+### Phase 5 — Quality control and dataset freeze
+
+STEP 5 — Quality control and canonical dataset freeze.
+
+1. Run all 15 checks in Section 19 and report pass/fail with fixes applied.
+2. Recompute Attractiveness, Readiness and Overall for every row from the raw scores and weights; list any discrepancy and correct it.
+3. Verify ID uniqueness, controlled-vocabulary compliance, and that every technology use case has a payer-specificity class.
+4. Re-verify every regulatory citation and every litigation reference (status and date verified; allegation vs finding).
+5. Produce the **final canonical dataset v1.0** with ALL columns from Section 18. If you can create files, write it to `canonical_dataset_v1.0.csv` and generate Steps 6 and 7 from that file; otherwise output it as CSV blocks of at most 40 rows each. Do not omit or abbreviate any field. In chat, show only a compact summary table (ID, name, domain, verdict, Attractiveness, Readiness, Overall, gate flags).
+6. Provide the final Source Ledger and the list of remaining evidence gaps.
+
+Write a STATUS line and continue (do not generate files until Step 6).
+
+### Phase 6 — Deliverable files
+
+STEP 6 — Generate the XLSX.
+
+Using ONLY the frozen dataset v1.0, create **U.S. Healthcare Payer AI Use-Case Scorecard.xlsx** exactly as specified in Section 21. Requirements: weights on the Scoring Model sheet drive live formulas in the Scoring Matrix (Attractiveness, Readiness, Overall, gate cap); nothing hard-coded that should be a formula; frozen header rows, filters, data validation for controlled vocabularies, readable column widths, consistent formatting. After creating it, recalculate and verify that Overall scores match the dataset for every row and report any mismatch. Give me the file.
+
+STEP 7 — Generate the DOCX.
+
+Using ONLY the frozen dataset v1.0 (and the Step 1–5 findings), create **U.S. Healthcare Payer AI Use-Case Inventory.docx** with the sections specified in Section 21. Card depth: full Use-Case Cards for all Phase 2 shortlist candidates, all gate-failed use cases, all "AI Not Justified" findings, and the top 40 use cases by Overall score; every remaining use case appears in an appendix table (ID, name, domain, verdict, scores, flags). Executive-quality formatting: numbered headings, table of contents, consistent tables, source list at the end. IDs, scores and weights must match the XLSX exactly. Give me the file.
+
+---
+
+**Begin now with Step 1.**
+
+▲▲▲ END OF PROMPT ▲▲▲
+
+
+# PROMPT 2 — SINGLE-RUN VERSION (Phase 2: HOW)
+
+**How to use:**
+1. Open a **new** chat with web research and file creation enabled.
+2. **Attach** the frozen Phase 1 files: `U.S. Healthcare Payer AI Use-Case Inventory.docx` and `U.S. Healthcare Payer AI Use-Case Scorecard.xlsx`.
+3. In Section 2 of the prompt, replace `[SELECTED USE CASES ...]` with your chosen Use_Case_IDs and names.
+4. Paste everything between the markers as **one message**.
+
+**Recommendations for your first trial:**
+- **Select ONE use case for the first run.** Two or three use cases means 30–40+ Mermaid diagrams and a very long output; one use case is the fair test of the prompt's quality. Add the others in later runs (paste again with the next use case, or use the staged version).
+- Expect several "continue" prompts. If it restarts or summarizes, reply: *"Continue from the last complete item. Do not restart or summarize."*
+- Spot-check: every regulatory citation, any benchmark number attributed to Jev/System One (it should be tagged as a vendor claim), and the Phase 1 Challenge Log (it should record disagreements, not silently overwrite Phase 1).
+- The vendor overlay is a separate follow-up (bottom of this file). Fill it in only when you have the vendor parameters.
+
+---
+
+▼▼▼ PASTE FROM HERE ▼▼▼
+
+# U.S. HEALTHCARE PAYER AI — SOLUTION, ARCHITECTURE, MATURITY, VALUE & IMPLEMENTATION DEEP DIVE
+## Single-Run Brief — Phase 2 ("HOW")
+
+## 0. SINGLE-RUN EXECUTION PROTOCOL (read first)
+
+This message is a **complete, single-run instruction**. **Begin work immediately with Step 1 of the Work Order (Section 26).** Do not ask clarifying questions; where something is ambiguous, state an assumption in the Assumption Ledger and proceed.
+
+- **Input check first:** the Phase 1 DOCX and XLSX must be attached. If they are not, say so in one line and stop. Do not proceed from memory, and never invent Phase 1 content.
+- **Sequence:** Step 1 (intake and audit) once; Step 2 (sub-steps 2a–2d) **for one selected use case at a time, finishing all of one before starting the next**; Step 3 (synthesis and files) once.
+- **Output handling:** if a response reaches its length limit, stop at a clean boundary, label it "Part X — Step N", and end with one line naming the exact next item. When I reply "continue", resume exactly there. Never restart, re-summarize or compress earlier material.
+- **Priority under constraint:** protect in this order: (1) analytical completeness and correctness for each use case in the order listed, including the Challenge Log; (2) scores, value model and conclusions; (3) cross-use-case synthesis; (4) formatting and polish. Never silently shorten: state plainly what was reduced and why.
+- **Diagrams:** produce every diagram as **Mermaid** code with a two-sentence caption. If output limits bite, keep Mermaid for the target-state, logical, sequence and control-plane views first and give the remaining artifacts as compact structured tables, and say which you converted.
+- **Progress notes:** end each sub-step with a STATUS line (5 lines maximum: done, open assumptions, evidence gaps).
+- **Ledgers:** maintain an Assumption Ledger (A-01…), a Source Ledger (reuse Phase 1 IDs where applicable; new IDs P2-S-001…) and a Phase 1 Challenge Log (Section 5); append new entries at the end of each sub-step in compact form.
+- **Date:** today is **September 28, 2026**. Prioritize 2025–2026 evidence; date-stamp time-sensitive claims with the date you verified them.
+- **Files:** in Step 3 create real files with your file-creation/code tools; if unavailable, output Markdown and CSV.
+
+## 1. ROLE
+
+Act as a senior: U.S. Healthcare Payer Domain Architect; Enterprise Architect; Solution Architect; AI Architect; Cloud/Data/Integration Architect; Technology Strategist; AI Transformation Strategist; Healthcare Payer Industry Researcher.
+
+This is the **second phase of a two-phase program.** Phase 1 identified and prioritized payer AI opportunities. Phase 2 performs a detailed **solution-space, architecture, maturity, value, feasibility, limitation, trade-off and implementation analysis** for the selected use cases.
+
+## 2. INPUTS
+
+- Treat the uploaded Phase 1 **DOCX and XLSX** as authoritative source artifacts. Use them together, cross-check Use-Case IDs, scores, evidence and rationale, and preserve consistency between them.
+- **Selected use cases:** [SELECTED USE CASES — paste the 2–3 Use_Case_IDs and names from the Phase 1 shortlist]
+- Treat Phase 1 research, scores and assumptions as **input, not truth**. Challenge them wherever deeper research finds contradictory evidence.
+- **Vendor / "My Company" parameters are intentionally BLANK** (Section 16). Never invent them. Evaluate every use case independently of vendor maturity so the parameters can be overlaid later.
+
+## 3. PRIMARY OBJECTIVE
+
+For each selected use case determine: Is AI justified? What AI role? Which AI technologies/patterns? What stays conventional software, rules or automation? What stays human? What should AI do? Where does AI sit in the enterprise architecture? What is the end-to-end target architecture? What data, integration and prerequisites are required? How mature are the AI industry and the U.S. payer domain, and how does that vary by enterprise archetype? What are the software and hardware limitations? What security, privacy, compliance and governance are required? Pros, cons, trade-offs? Anti-patterns? Realistic value and how to measure it? What would implementation look like? Build, buy or partner? **What would cause the initiative to be stopped, redesigned or implemented without AI?**
+
+The objective is the **best-fit solution and architecture**, not proving that AI should be used.
+
+## 4. SCOPE
+
+Strictly **U.S. Healthcare Payer / Health Insurance**: commercial, Medicare/Medicare Advantage, Medicaid/Medicaid managed care, ACA/QHP, other U.S. payer models. Assess applicability across greenfield/digital-native; modern cloud-enabled; legacy brownfield; highly complex legacy; post-merger/multi-acquisition; highly fragmented; high technical-debt; data-mature vs. data-fragmented enterprises. Where actual client architecture is unknown, **make assumptions explicit in the Assumption Ledger and never invent client-specific architecture.**
+
+## 5. PHASE 1 CHALLENGE LOG (required output for every use case)
+
+A table of every place where Phase 2 research changes a Phase 1 fact, score, gate status, maturity rating, AI verdict or assumption: `UC-ID | Item | Phase 1 value | Phase 2 value | Reason | Evidence`. Never silently overwrite Phase 1.
+
+## 6. EVIDENCE RULES
+
+Tag every major claim: `SF` sourced fact · `PRAC` documented industry practice · `RES` research evidence · `VEND` vendor claim · `ANLY` analyst synthesis · `ASSUME` assumption · `FWD` forward-looking hypothesis. Cite every major external claim; **never invent** sources, statistics, capabilities, financial benefits or client architecture. Vendor benchmark multiples are `VEND`, not fact. Litigation: separate allegations from findings and state status/date verified. Distinguish legal requirements from recommended controls. Use authoritative U.S. sources (CMS, HHS/OCR, ONC/ASTP, NIST, FTC, state DOIs, NAIC, HL7, peer-reviewed research, payer filings) before consultancies and vendors. State uncertainty explicitly.
+
+## 7. USE-CASE REVALIDATION AND PROBLEM DEFINITION
+
+Document: problem statement; business objective; technology objective; external driver; why now; current process; current pain points; desired outcomes; stakeholders; payer relevance; enterprise-archetype relevance. Explicitly distinguish **Problem → Use Case → AI Opportunity → Solution Architecture**.
+
+## 8. CURRENT-STATE ANALYSIS
+
+Document: business workflow; applications; data sources; human activities; rules; automation; integrations; APIs; events; manual handoffs; decision points; exceptions; bottlenecks; existing metrics; security/privacy constraints. Use typical U.S. payer patterns as *labeled reference assumptions* (`ASSUME`), never as facts about a specific client.
+
+## 9. CONVENTIONAL IT BASELINE (before recommending AI)
+
+Design the **strongest reasonable non-AI approach**: rules engines, workflow, APIs, RPA, conventional development, data engineering, traditional ML, process redesign, application modernization, manual+automation combinations. Then compare **conventional vs AI-enabled** on cost, speed, quality, flexibility, scalability, maintainability, explainability, risk, complexity, operational overhead and long-term capability. Do not assume the AI architecture is superior.
+
+## 10. "WHY AI?" PRESSURE TEST AND STOP CONDITIONS
+
+Answer: Why AI? Why now? Why *this* AI technology? Why not conventional software, deterministic automation, rules, traditional ML? What unique AI capability is required? Does AI materially change the economics? The capability? Does it create net-new capability, or add complexity? Would the use case be better without AI?
+
+Deliver an explicit **AI Justification** and an **AI Non-Justification / Stop Conditions** section (the measurable conditions under which you would stop, redesign or go without AI).
+
+## 11. AI ROLE, TECHNOLOGY OPTIONS AND INTEGRATION MODEL
+
+**Role** (pick and justify): Assistant · Augmentor · Accelerator · Decision-support layer · Decision engine · Automation layer · Collaboration layer · Orchestration layer · Semantic/integration layer · Core application capability · Core architecture capability · New enterprise capability · Transformation mechanism.
+
+**Technology options** — evaluate generative AI; predictive/classical ML; reasoning models; multimodal; small and specialized models; fast-inference/structured-decision models; conversational AI; human+AI collaboration; agentic and multi-agent; AI automation; hybrids with rules or deterministic software; RAG; model routing; multi-model architecture; AI semantic translation/mapping. For each: fit, maturity (Proven / Production-emerging / Emerging / Experimental / Uncertain), evidence, performance, cost, latency, explainability, privacy, risk, infrastructure, payer applicability. Do not recommend technology because it is recent.
+
+**System One models (e.g., TypeSafe AI's Jev, early-access announcement September 15, 2026):** treat as new, with no assumed payer-production evidence. Separate documented properties, vendor claims (`VEND`) and independent evidence; test against a fine-tuned small classifier / embedding+classifier baseline; note text-only input (currently), no natural-language explanation of decisions, unproven calibration on payer data, and "schema-valid ≠ correct." Label payer applications as `FWD` hypotheses.
+
+**Integration model** (choose and explain what changes architecturally): Enabler · Accelerator · Augmentation layer · Decision layer · Automation layer · Orchestration layer · Integration/translation layer · Core architecture component · New operating model.
+
+## 12. END-TO-END ARCHITECTURE
+
+Cover these layers: **Experience** (member, provider, employee, ops, digital, contact center) · **Business process** (workflow, rules, human tasks, AI tasks, decisions, exceptions, escalations) · **Application** (claims, membership, provider, billing, care management, CRM, contact center, pharmacy, data platforms) · **Data** (structured/unstructured, documents, claims, clinical, provider, member, external, metadata, knowledge repositories, search/retrieval, quality, lineage, data contracts) · **AI** (foundation, specialized, reasoning and structured-decision models; embeddings; retrieval; model gateway and routing; context management; agent runtime; tool use; orchestration) · **Integration** (APIs, events, messaging, FHIR, payer interoperability standards, enterprise integration) · **AI governance/control** (identity, authorization, policy enforcement, guardrails, human approval, evaluation, monitoring, auditability, explainability, model lifecycle/versioning) · **Infrastructure** (cloud, on-prem, hybrid, compute, GPU/accelerator, storage, network, reliability, DR, scalability).
+
+**Required artifacts per use case (all as Mermaid or structured tables):** 1 Current-state architecture · 2 Target-state architecture · 3 Logical architecture · 4 Physical/deployment architecture · 5 End-to-end process flow · 6 Data flow · 7 AI flow · 8 Sequence/interaction flow · 9 Integration architecture · 10 Human-in-the-loop model · 11 AI control plane · 12 Security/privacy architecture · 13 Operating model · 14 Migration/transition architecture. Label every component **Retained / Enhanced / Wrapped / Replaced / Bypassed / Newly introduced**.
+
+## 13. DECISION-STACK DESIGN (required)
+
+Where AI produces decisions, design the **tiered decision stack**: (1) deterministic rules/policy layer; (2) fast structured-decision model or classifier (including System One–style options where justified); (3) reasoning model; (4) human reviewer. Specify: which decisions each tier owns; **confidence thresholds and escalation triggers**; how **calibration** is validated on payer data and monitored for drift; the cost and consequence of miscalibration; fallback behavior when a tier is unavailable; latency and cost per tier. Justify why fewer tiers would (or would not) suffice.
+
+## 14. HUMAN + AI OPERATING MODEL AND ADVERSE-DECISION DEFENSIBILITY
+
+Define explicitly: what AI does; what humans do; what conventional software does; what needs human approval; what may be autonomous; what **cannot** be autonomous; escalation; exception management; accountability; auditability. Evaluate autonomy levels — Human only · AI recommendation · Human approval · Bounded automation · Conditional autonomy · High autonomy — and justify the chosen level.
+
+**Hard architecture requirement:** for any output that can influence a member- or provider-adverse determination, the design must show how the decision is **reconstructed** after the fact (inputs, model/version, policy, confidence, reviewer, rationale), how a reviewer has **genuine authority, time, information and incentive to disagree** (test for automation bias, productivity targets that penalize deviation, and "signature-only" review), and how the individualized-review requirement is preserved. A design that cannot satisfy this must be redesigned or must be marked as a **Stop Condition**.
+
+## 15. MATURITY ASSESSMENT
+
+Assess separately, with evidence: **AI industry maturity** (model capability, infrastructure, agent frameworks, model operations, evaluation, observability, security, commercial ecosystem) · **U.S. payer AI maturity** (adoption, production use, common use cases, regulation, governance, data readiness, operating model, workforce readiness) · **Enterprise archetype maturity** (greenfield, modern, brownfield, legacy-heavy, post-merger, high technical-debt) — and explain how architectural feasibility and value change across archetypes. Use Phase 1's M1–M5 scale (M1 Experimental … M5 Commoditized).
+
+## 16. MY COMPANY / VENDOR PARAMETERS — KEEP BLANK
+
+Do not invent or infer these. Reproduce this block unchanged in the output for later fill-in.
+
+- My Company / Vendor AI Maturity: **[BLANK]**
+- My Company / Vendor Healthcare Payer AI Maturity: **[BLANK]**
+- My Company / Vendor Relevant Experience: **[BLANK]**
+- My Company / Vendor Reference Implementations: **[BLANK]**
+- My Company / Vendor Existing IP / Accelerators: **[BLANK]**
+- My Company / Vendor Existing Platforms / Assets: **[BLANK]**
+- My Company / Vendor Strategic Capabilities: **[BLANK]**
+
+## 17. AI LIMITATIONS
+
+**Software:** hallucination; incorrect reasoning; non-determinism; context limits; retrieval and grounding failure; model drift; prompt sensitivity; tool-use errors; long-horizon failure; agent loops; evaluation difficulty; explainability; bias; data dependency; model version changes; vendor dependency; lack of domain specificity.
+**Hardware/infrastructure:** GPU/accelerator availability; memory/VRAM; compute; inference latency; throughput; concurrency; cost; power; network latency; data movement; cloud vs on-prem constraints; capacity; reliability; disaster recovery.
+Classify whether the use case is **compute-, latency-, token-, data-, privacy- or availability-sensitive.**
+
+## 18. SECURITY, PRIVACY, COMPLIANCE AND GOVERNANCE
+
+**Security/privacy/compliance:** PHI; PII; HIPAA (Privacy, Security, Breach rules); minimum necessary; identity and authorization; encryption; retention; residency; logging; auditability; third-party and model-provider risk (BAA coverage); prompt injection; data exfiltration; sensitive-data leakage; AI supply-chain and model security; human accountability; regulatory reporting. Distinguish **legal requirements** from **recommended controls**; cite U.S. sources (HHS/OCR, NIST AI RMF and related guidance, CMS, state law).
+**AI governance:** AI inventory; model approval; risk classification; evaluation and validation; monitoring; bias/fairness; explainability; audit trails; drift; incident management; human oversight; version and change management; vendor management; decommissioning.
+
+## 19. ANTI-PATTERNS AND "DO NOT USE AI" CONDITIONS
+
+Evaluate whether the proposed architecture becomes an anti-pattern: AI where deterministic software is better; agent where workflow suffices; large model where a small one suffices; AI without adequate data or controls; AI optimizing the wrong bottleneck; AI automating a broken process; complexity exceeding value; excessive inference cost or latency; **human review becoming a hidden bottleneck or a nominal signature**; excessive lock-in; missing accountability, validation or auditability; immature technology; **algorithmic estimates displacing clinical judgment**; **batch adverse decisions without individualized review**; **historical-bias amplification**; **deterministic calculations handed to probabilistic models**; **POC purgatory / integration-cost blindness**.
+
+Use documented precedent (verify status; allegations vs findings): litigation involving UnitedHealth/naviHealth's nH Predict and Humana; litigation involving Cigna's PxDx; CMS guidance on algorithm use in MA coverage determinations; state restrictions on AI-only adverse determinations. Deliver **Do Not Use AI Conditions** and **Architectural Stop / Pivot Conditions** with measurable triggers.
+
+## 20. PROS / CONS / TRADE-OFFS
+
+Analyze business (value, complexity, adoption, process change); technology (flexibility, maintainability, performance, complexity); architecture (integration, coupling, modernization, technical debt); AI (accuracy, explainability, autonomy, model choice and lifecycle); economics (build, run, inference, infrastructure, human oversight); risk (privacy, compliance, security, accountability); vendor (build vs buy, lock-in, control, IP, ecosystem); operating model (skills, governance, organizational change). Present **explicit trade-off pairs** (e.g., agentic speed vs auditability; generative flexibility vs hallucination risk in regulator-facing content). **Do not suppress negative findings.**
+
+## 21. VALUE REALIZATION MODEL
+
+For each dimension — **Financial** (administrative cost, medical cost/MLR, revenue, leakage, payment integrity, avoided cost) · **Operational** (cycle time, throughput, FTE capacity, automation, straight-through processing, exception rate, rework) · **Quality** · **Experience** (member, provider, employee, broker; NPS/CSAT) · **Strategic** (net-new capability, speed to market, differentiation, scale, optionality) · **Technology** (technical debt, modernization, legacy retirement, simplification, engineering productivity) · **Risk** (compliance, privacy, security, auditability, resilience) — provide: baseline; target; measurement method; realization horizon; estimated range; assumptions; confidence; attribution complexity. **Avoid double-counting.** Separate direct, operational, strategic and option value. Do not manufacture numbers: ranges only where evidence supports them, otherwise state "not quantifiable from available evidence."
+
+## 22. SCORES
+
+Produce at least two scores using Phase 1's structure and default weights (restate them; propose changes only with justification, and record differences in the Challenge Log):
+- **A. Opportunity Attractiveness (0–100)** — Business Value 20, Technology Value 10, AI Leverage 15, Innovation 10, Strategic Value 15, Experience Value 10, Risk/Compliance Value 10, Architecture Leverage 5, Scalability 5.
+- **B. Realization Readiness (0–100)** — Time-to-Value 15, Feasibility 20, Data Readiness 20, Industry Maturity 10, AI Maturity 15, Risk_Score (5 = lowest risk) 10, Evidence Strength 10.
+Scale 1–5 with rationale, evidence tag and confidence per criterion; re-check the **gates** (G1 adverse-decision defensibility, G2 PHI/PII handling, G3 regulatory conflict) with detail; a failed gate caps the score at 50. **Do not use blank vendor parameters as known facts.**
+
+## 23. IMPLEMENTATION READINESS, BUILD/BUY/PARTNER, ROADMAP, FUTURE EVOLUTION
+
+**Implementation readiness — what to check at the client/vendor site:** current-state assessment (business process, application, data, integration, security, privacy, AI maturity, DevSecOps, MLOps/LLMOps, governance, operating model, workforce); readiness (data, APIs, cloud, AI platform, security, compliance, organization, process); required transformation (capabilities, skills, platform, governance, process redesign, operating model, change management).
+**Build / Buy / Partner:** build; buy; managed AI service; model provider; domain vendor; strategic partner; hybrid — compare time-to-market, differentiation, control, cost, IP, flexibility, lock-in, regulatory risk, scalability.
+**Roadmap:** Phase 0 Assessment/Feasibility · Phase 1 Proof of Value · Phase 2 Pilot · Phase 3 Production MVP · Phase 4 Scale · Phase 5 Enterprise Transformation — each with objective, business scope, architecture, data, AI, people, governance, controls, KPIs, risks, dependencies, **exit criteria.**
+**Future evolution:** how the architecture should adapt to new models, model routing, smaller specialized models, reasoning improvements, agent capabilities, hardware and inference economics, new interoperability standards, regulatory change and new data sources — prefer architectures that evolve without major redesign.
+
+## 24. FINAL ARCHITECTURAL CONCLUSION
+
+For each use case pick exactly one position and justify it: **AI not justified · AI as augmentation · AI as accelerator · AI as bounded automation · AI as decision capability · AI as orchestration · AI as core solution capability · AI as transformative operating-model capability.** This is an architectural conclusion about the selected use case, not an assumption that AI must be used.
+
+## 25. FINAL DELIVERABLE STRUCTURE
+
+One comprehensive research document (assembled in Step 3) with a separate deep-dive section per selected use case and a cross-use-case synthesis, in this order: 1 Executive Summary · 2 Use-Case Revalidation · 3 Problem Definition · 4 Current-State Analysis · 5 Conventional IT Baseline · 6 Why AI · 7 AI Technology Options · 8 AI Role · 9 AI Integration Model · 10 End-to-End Architecture · 11 Data Architecture · 12 Integration Architecture · 13 AI Architecture (incl. decision stack) · 14 Human + AI Operating Model (incl. adverse-decision defensibility) · 15 Security/Privacy · 16 Governance · 17 Industry AI Maturity · 18 U.S. Payer Maturity · 19 Enterprise Archetype Comparison · 20 Vendor/My Company Parameters (blank) · 21 AI Software Limitations · 22 Hardware/Infrastructure Limitations · 23 AI Anti-Patterns · 24 Pros/Cons/Trade-offs · 25 Value Realization · 26 Opportunity/Readiness Scores · 27 Implementation Readiness · 28 Build/Buy/Partner · 29 Implementation Roadmap · 30 Future Evolution · 31 Architectural Conclusion · 32 Evidence/Sources — plus the **Phase 1 Challenge Log** and **Assumption Ledger** as appendices.
+
+The synthesis must identify **which architectural components are reusable across use cases and which are use-case-specific**, and must clearly separate sourced fact, industry practice, research evidence, analyst synthesis, assumption and forward-looking hypothesis.
+
+The arc: *selected payer problem → AI fit → solution alternatives → target architecture → maturity → limitations → risks → value → implementation → scalable enterprise architecture* — not merely an "AI solution diagram."
+
+---
+
+## 26. WORK ORDER (execute in this order without waiting for approval)
+
+### Step 1 — Intake and Phase 1 audit (once)
+
+STEP 1 — Intake and Phase 1 audit.
+
+1. Read both uploaded Phase 1 files. Confirm each was opened and give row/section counts (use cases in the XLSX, use-case cards in the DOCX).
+2. **Cross-check** for each selected use case: ID, name, Overall/Attractiveness/Readiness scores, gate statuses, AI verdict, evidence references — DOCX vs XLSX. List every inconsistency; do not resolve silently.
+3. Restate each selected use case in one paragraph (problem, driver, LOB, archetype relevance, AI verdict, Phase 1 rationale for selection).
+4. List the **initial assumptions** you will need (Assumption Ledger A-01…), the **evidence you expect to have to verify**, and the **top three Phase 1 conclusions you plan to stress-test** for each use case.
+5. Confirm the vendor parameters (Section 16) remain BLANK.
+
+Do not design any architecture in this step. Write a STATUS line and continue to Step 2 with the first selected use case.
+
+### Step 2 — Per-use-case deep dive (repeat 2a → 2d for EACH selected use case, in the order listed in Section 2; finish one use case completely before starting the next)
+
+STEP 2a — Foundation.
+
+Deliver, for the current use case only: (Section 7) use-case revalidation and problem definition; (Section 8) current-state analysis with Mermaid current-state architecture and process flow; (Section 9) conventional IT baseline and the comparison table; (Section 10) Why-AI pressure test with AI Justification and AI Non-Justification/Stop Conditions; (Section 11) AI role, technology options table (including System One/Jev where relevant, with the evidence separation required), and AI integration model with what changes architecturally.
+
+Update the Assumption Ledger, Source Ledger and Challenge Log. Write a STATUS line and continue.
+
+STEP 2b — Target architecture and operating model.
+
+Deliver, for the current use case: (Section 12) the full end-to-end architecture by layer, with all 14 required artifacts as Mermaid or tables (target-state, logical, physical/deployment, process flow, data flow, AI flow, sequence, integration, human-in-the-loop, AI control plane, security/privacy, operating model, migration/transition), every component labeled Retained/Enhanced/Wrapped/Replaced/Bypassed/Newly introduced; (Section 13) the tiered decision stack with thresholds, escalation, calibration and drift monitoring, and fallback; (Section 14) the human+AI operating model, autonomy-level choice, and the adverse-decision defensibility design (reconstruction record and genuine-override tests).
+
+Also list reusable vs use-case-specific components identified so far. Update ledgers and Challenge Log. Write a STATUS line and continue.
+
+STEP 2c — Maturity, limitations, controls and trade-offs.
+
+Deliver, for the current use case: (Section 15) industry AI maturity, U.S. payer maturity, and enterprise-archetype comparison table (feasibility and value by archetype); (Section 16) the vendor parameters block reproduced BLANK; (Section 17) software and hardware limitations with the sensitivity classification; (Section 18) security, privacy, compliance and governance — legal requirements vs recommended controls, cited; (Section 19) anti-pattern assessment with documented precedent, Do-Not-Use-AI conditions and measurable Stop/Pivot triggers; (Section 20) pros/cons/trade-off pairs across all eight categories.
+
+Update ledgers and Challenge Log. Write a STATUS line and continue.
+
+STEP 2d — Value, scores, implementation and conclusion.
+
+Deliver, for the current use case: (Section 21) value realization model with baseline, target, measurement, horizon, range, assumptions, confidence and attribution for every dimension, without double-counting; (Section 22) Attractiveness and Readiness scores with per-criterion rationale, evidence tag and confidence, restated weights, calculation shown, and detailed gate re-check; (Section 23) implementation-readiness checklist, build/buy/partner comparison, the six-phase roadmap with exit criteria, and future-evolution notes; (Section 24) the single Final Architectural Conclusion with justification.
+
+Finish with the complete **Phase 1 Challenge Log** and **Assumption Ledger** for the current use case. Write a STATUS line and continue.
+
+### Step 3 — Synthesis and final files (once, after every selected use case has completed Step 2d)
+
+STEP 3 — Synthesis and final deliverables.
+
+1. **Cross-use-case synthesis:** reusable architectural components (AI gateway, control plane, data contracts, evaluation harness, audit record, etc.) vs use-case-specific; shared prerequisites; sequencing recommendation; combined roadmap; portfolio-level risks; where the conclusions differ (for example, one use case is "AI not justified" while another is "AI as decision capability") and why.
+2. **Executive summary** written for a senior technology and business audience.
+3. **Assemble the final document** **Phase 2 Architecture Deep Dive.docx** following the Section 25 structure, with a separate deep-dive section per use case, the synthesis, the consolidated Challenge Log, Assumption Ledger, and Source Ledger (evidence-tagged). Render every Mermaid diagram as an image if your tooling can; otherwise keep the Mermaid source in appendices and describe each diagram in the body. Also create a small **Phase 2 Scores & Value Model.xlsx** (scores, weights as live formulas, value model tables) so numbers match the document exactly.
+4. Verify consistency: IDs, scores, gate statuses and conclusions must match between the document and workbook, and every Phase 1 deviation must appear in the Challenge Log.
+
+Give me the files, then a final STATUS line.
+
+---
+
+**Begin now with Step 1.** (Step 4, the vendor overlay, is a separate follow-up that I will send after filling in the vendor parameters.)
+
+▲▲▲ END OF PROMPT ▲▲▲
+
+---
+
+# FOLLOW-UP PROMPT — Vendor overlay (send later, in the same chat, after you fill in the vendor parameters)
+
+▼▼▼
+STEP 4 — Vendor overlay.
+
+My company / vendor parameters are now:
+- AI Maturity: [FILL IN]
+- Healthcare Payer AI Maturity: [FILL IN]
+- Relevant Experience: [FILL IN]
+- Reference Implementations: [FILL IN]
+- Existing IP / Accelerators: [FILL IN]
+- Existing Platforms / Assets: [FILL IN]
+- Strategic Capabilities: [FILL IN]
+
+Treat these as my stated inputs (tag `ASSUME` unless I provide evidence). **Do not change the vendor-independent assessments**; instead add an overlay per use case: (1) Vendor-Fit assessment against each architectural component (fits / gap / build needed); (2) an adjusted **Realization Readiness** shown *alongside* the vendor-independent score, with the delta explained; (3) build/buy/partner implications; (4) gaps to close, and an indicative sequencing of closing them; (5) risks from over-reliance on claimed maturity. Update the Challenge Log and the workbook. STATUS block.
+▲▲▲
