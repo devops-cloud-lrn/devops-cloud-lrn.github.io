@@ -1,0 +1,1975 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vulnerability Remediation Command Center v4.0 — Zero-LLM Deterministic Pipeline</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+    }
+  </script>
+  <!-- SheetJS via Allowed CloudFlare CDN (with built-in offline fallback in JS) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <!-- Google Fonts Inter & JetBrains Mono -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', Consolas, monospace;
+    }
+    body {
+      font-family: var(--font-sans);
+      overflow-x: hidden;
+    }
+    code, .mono {
+      font-family: var(--font-mono);
+    }
+    
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    .dark ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    .dark ::-webkit-scrollbar-thumb {
+      background: #334155;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    .dark ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+
+    /* Glass Panels */
+    .glass-panel {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(203, 213, 225, 0.75);
+    }
+    .dark .glass-panel {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(51, 65, 85, 0.75);
+    }
+
+    /* Hover Effects */
+    .card-hover {
+      transition: all 0.18s ease;
+    }
+    .card-hover:hover {
+      border-color: #3b82f6;
+      box-shadow: 0 8px 24px -4px rgba(37, 99, 235, 0.2);
+    }
+    #workspace-scaler {
+      transform-origin: top center;
+      transition: transform 0.15s ease;
+    }
+
+    /* Print-safe Vector PDF rules */
+    @media print {
+      @page { size: A4 landscape; margin: 8mm; }
+      body {
+        background: #ffffff !important;
+        color: #0f172a !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .no-print { display: none !important; }
+      #workspace-scaler { transform: none !important; width: 100% !important; }
+      .glass-panel {
+        background: #ffffff !important;
+        border: 1px solid #cbd5e1 !important;
+        color: #0f172a !important;
+        box-shadow: none !important;
+        break-inside: avoid;
+      }
+      svg text { fill: #0f172a !important; }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-blue-600 selection:text-white bg-slate-50 dark:bg-[#0b1120] text-slate-900 dark:text-[#e2e8f0] transition-colors duration-200">
+
+  <!-- TOP NOTIFICATION TOAST -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-md pointer-events-none no-print"></div>
+
+  <!-- MODAL FOR COMPILER DIAGNOSTICS / DETAILS -->
+  <div id="diagnostic-modal" class="fixed inset-0 z-50 hidden bg-slate-200/80 dark:bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 no-print">
+    <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl max-w-3xl w-full p-6 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3 mb-4">
+        <div class="flex items-center gap-2.5">
+          <span class="w-3 h-3 rounded-full bg-rose-500 animate-pulse"></span>
+          <h3 id="modal-title" class="text-base font-bold text-slate-900 dark:text-white mono">Batch-of-2 Compiler &amp; Git Rollback Diagnostics</h3>
+        </div>
+        <button onclick="closeModal()" class="text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white px-2.5 py-1 rounded bg-slate-100 dark:bg-slate-800 text-xs font-semibold">ESC / Close</button>
+      </div>
+      <div id="modal-body" class="space-y-4 text-xs"></div>
+    </div>
+  </div>
+
+  <!-- STICKY ENTERPRISE HEADER -->
+  <header class="sticky top-0 z-40 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 lg:px-6 py-3 no-print transition-colors duration-200">
+    <div class="max-w-[1600px] mx-auto flex flex-wrap items-center justify-between gap-3">
+      <!-- Brand & Status -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center shadow-lg shadow-blue-900/20 dark:shadow-blue-900/40 border border-blue-400/30">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base sm:text-lg font-extrabold tracking-tight text-slate-900 dark:text-white">VULN-COMMAND-CENTER <span class="text-blue-700 dark:text-blue-400 mono text-xs font-semibold px-2 py-0.5 bg-blue-100 dark:bg-blue-950/80 border border-blue-300 dark:border-blue-700/50 rounded-full">v4.0 STEP-2</span></h1>
+            <span id="dataset-mode-badge" class="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/60">Step 1 v4 Baseline Loaded (24 Rows / 11 Services)</span>
+          </div>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Zero-LLM Deterministic Remediation Engine • 100% Excel-Native Config • Batch-of-2 Checkpoint &amp; Auto-Rollback Tracer</p>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-wrap items-center gap-2">
+        <!-- Theme Toggle Button -->
+        <button onclick="toggleTheme()" class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition shadow-sm border border-slate-300 dark:border-slate-700" title="Toggle Light/Dark Theme">
+          <svg id="theme-icon-light" class="w-4 h-4 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+          <svg id="theme-icon-dark" class="w-4 h-4 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+        </button>
+
+        <!-- Upload Master Dev Excel -->
+        <label class="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 text-xs font-semibold transition">
+          <svg class="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+          <span>Load Master v4 (.xlsx)</span>
+          <input type="file" id="upload-master-input" accept=".xlsx,.xls,.csv" class="hidden" onchange="handleExcelUpload(event, 'master')" />
+        </label>
+
+        <!-- Upload Dev Report Excel -->
+        <label class="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 text-xs font-semibold transition">
+          <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <span>Load Dev Report (.xlsx)</span>
+          <input type="file" id="upload-dev-input" accept=".xlsx,.xls,.csv" class="hidden" onchange="handleExcelUpload(event, 'dev')" />
+        </label>
+
+        <!-- 60,000+ Rows Stress Test Button -->
+        <button id="btn-stress-test" onclick="toggleStressTest()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 dark:from-amber-600 dark:to-orange-600 hover:from-amber-600 hover:to-orange-600 dark:hover:from-amber-500 dark:hover:to-orange-500 text-white text-xs font-bold shadow-md shadow-orange-900/20 dark:shadow-orange-950/50 transition">
+          <span>⚡ Simulate 60,000+ Rows (48K OS + 12K App)</span>
+        </button>
+
+        <!-- Export Synced Excel -->
+        <button onclick="exportSyncedWorkbook()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 dark:bg-emerald-700 hover:bg-emerald-700 dark:hover:bg-emerald-600 text-white text-xs font-semibold transition">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <span>Export Synced v4 (.xlsx)</span>
+        </button>
+
+        <!-- Zoom Controls -->
+        <div class="inline-flex items-center rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-0.5 text-xs">
+          <button onclick="adjustZoom(-0.1)" class="px-2 py-1 text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded" title="Zoom Out">−</button>
+          <button onclick="adjustZoom(0)" id="zoom-label" class="px-2 py-1 text-slate-700 dark:text-slate-200 font-mono text-[11px] hover:bg-slate-100 dark:hover:bg-slate-800 rounded">100%</button>
+          <button onclick="adjustZoom(0.1)" class="px-2 py-1 text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded" title="Zoom In">+</button>
+        </div>
+
+        <!-- Print PDF -->
+        <button onclick="window.print()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 dark:hover:bg-blue-500 text-white text-xs font-semibold shadow-md shadow-blue-900/20 dark:shadow-blue-950/50 transition">
+          <span>🖨️ Print Vector PDF</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- NAVIGATION TABS & GLOBAL FILTER BAR -->
+    <div class="max-w-[1600px] mx-auto mt-3 pt-2.5 border-t border-slate-200 dark:border-slate-800/80 flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-3">
+      <!-- 4 Main View Tabs -->
+      <div class="flex flex-wrap items-center gap-1.5" role="tablist">
+        <button onclick="switchMainTab('tab-analytics')" id="btn-tab-analytics" class="tab-btn px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 bg-blue-600 text-white shadow-sm">
+          <span>📊 1. Executive &amp; Lead Analytics</span>
+        </button>
+        <button onclick="switchMainTab('tab-tracer')" id="btn-tab-tracer" class="tab-btn px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-800">
+          <span>🔀 2. Developer Artifact State Tracer (15 States)</span>
+          <span id="badge-tracer-count" class="px-1.5 py-0.2 rounded-full text-[10px] bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-700/50">11</span>
+        </button>
+        <button onclick="switchMainTab('tab-config')" id="btn-tab-config" class="tab-btn px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-800">
+          <span>⚙️ 3. Zero-JSON Config &amp; Service Registry</span>
+        </button>
+        <button onclick="switchMainTab('tab-grid')" id="btn-tab-grid" class="tab-btn px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-800">
+          <span>⚡ 4. Virtualized Vulnerability Grid</span>
+          <span id="badge-grid-count" class="px-1.5 py-0.2 rounded-full text-[10px] bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/50">24</span>
+        </button>
+      </div>
+
+      <!-- Global Interactive Filter Strip -->
+      <div class="flex flex-wrap items-center gap-2 text-xs">
+        <!-- Cluster Segmented Control -->
+        <div class="flex items-center bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-0.5">
+          <span class="px-2 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Cluster:</span>
+          <button onclick="setClusterFilter('DEV')" id="flt-cluster-DEV" class="px-2.5 py-1 rounded-md font-bold text-[11px] bg-blue-600 text-white">DEV</button>
+          <button onclick="setClusterFilter('PROD')" id="flt-cluster-PROD" class="px-2.5 py-1 rounded-md font-bold text-[11px] text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white">PROD</button>
+          <button onclick="setClusterFilter('BOTH')" id="flt-cluster-BOTH" class="px-2.5 py-1 rounded-md font-bold text-[11px] text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white">BOTH</button>
+        </div>
+
+        <!-- Grouping Scope Toggle -->
+        <div class="flex items-center bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-0.5">
+          <span class="px-2 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Layer:</span>
+          <button onclick="setGroupingFilter('ALL')" id="flt-grp-ALL" class="px-2.5 py-1 rounded-md font-bold text-[11px] bg-indigo-600 text-white">All (App+OS)</button>
+          <button onclick="setGroupingFilter('Application')" id="flt-grp-Application" class="px-2.5 py-1 rounded-md font-bold text-[11px] text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white">App Only</button>
+          <button onclick="setGroupingFilter('Red Hat OS')" id="flt-grp-OS" class="px-2.5 py-1 rounded-md font-bold text-[11px] text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white">Red Hat OS</button>
+        </div>
+
+        <!-- Namespace Dropdown -->
+        <select id="flt-namespace" onchange="applyAllFilters()" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-medium focus:outline-none focus:border-blue-500">
+          <option value="ALL">All Namespaces (4)</option>
+          <option value="retail-commerce">retail-commerce (Multi-Route Replica NS)</option>
+          <option value="wealth-portal">wealth-portal</option>
+          <option value="core-banking">core-banking</option>
+          <option value="legacy-archive-ns">legacy-archive-ns (Excluded Rule)</option>
+        </select>
+
+        <!-- Pipeline Lane Dropdown -->
+        <select id="flt-lane" onchange="applyAllFilters()" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-medium focus:outline-none focus:border-blue-500">
+          <option value="ALL">All Pipeline Lanes</option>
+          <option value="Stage-Alpha">Stage-Alpha (Multi-Lane Live/Next)</option>
+          <option value="Stage-Beta">Stage-Beta (Multi-Lane)</option>
+          <option value="Stage-Gamma">Stage-Gamma (Multi-Lane)</option>
+          <option value="Single-Live-Lane">Single-Live-Lane (Standalone)</option>
+        </select>
+
+        <!-- Developer Dropdown -->
+        <select id="flt-dev" onchange="applyAllFilters()" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-medium focus:outline-none focus:border-blue-500">
+          <option value="ALL">All Assigned Devs</option>
+          <option value="dev-alex">dev-alex (Retail &amp; Wealth)</option>
+          <option value="dev-priya">dev-priya (Wealth &amp; Core Banking)</option>
+          <option value="dev-rohan">dev-rohan (Core Banking)</option>
+          <option value="infra-team">infra-team (Red Hat OS Layer)</option>
+          <option value="unassigned">unassigned (Excluded)</option>
+        </select>
+
+        <!-- Search Input -->
+        <div class="relative flex-1 min-w-[190px]">
+          <input type="text" id="flt-search" oninput="applyAllFilters()" placeholder="Search CVE, Asset, Library, State..." class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-lg pl-8 pr-6 py-1.5 text-xs focus:outline-none focus:border-blue-500" />
+          <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <button onclick="resetAllFilters()" title="Reset Filters" class="absolute right-2 top-1.5 text-slate-400 hover:text-slate-800 dark:hover:text-white text-xs font-bold">✕</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN WORKSPACE CONTAINER -->
+  <main id="workspace-scaler" class="flex-1 max-w-[1600px] w-full mx-auto px-4 lg:px-6 py-5 space-y-6">
+
+    <!-- ACTIVE CONFIG & RELEASE PATTERN BANNER -->
+    <div class="glass-panel rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-3 border-l-4 border-l-blue-500">
+      <div class="flex flex-wrap items-center gap-4 text-xs">
+        <div class="flex items-center gap-1.5">
+          <span class="text-slate-500 dark:text-slate-400 font-medium">Active Cluster Filter:</span>
+          <span id="banner-cluster" class="px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-700/60 font-bold mono">DEV</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <span class="text-slate-500 dark:text-slate-400 font-medium">Resolved Release Branch:</span>
+          <span id="banner-release-branch" class="px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/60 font-bold mono">Release/10_24_2026</span>
+          <span class="text-[11px] text-slate-500 dark:text-slate-400">(from <code class="text-slate-700 dark:text-slate-300">Release/{MM}_{DD}_{YYYY}</code> + <code class="text-slate-700 dark:text-slate-300">10_24_2026</code>)</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <span class="text-slate-500 dark:text-slate-400 font-medium">Upgrade Loop:</span>
+          <span class="px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-700/60 font-semibold mono">Batch-of-2 + build.properties (+1)</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <span class="text-slate-500 dark:text-slate-400 font-medium">Active Exclusions:</span>
+          <span id="banner-exclusions" class="text-amber-600 dark:text-amber-300 mono text-[11px]">Cluster=PROD | NS=legacy-archive-ns | Asset=deprecated-legacy-widget | Sev=LOW | Group=Red Hat OS</span>
+        </div>
+      </div>
+      <div id="active-state-filter-pill" class="hidden items-center gap-2 bg-amber-100 dark:bg-amber-950/90 border border-amber-400 dark:border-amber-600/70 px-3 py-1 rounded-full text-xs text-amber-800 dark:text-amber-200">
+        <span>Filtered by State: <strong id="active-state-filter-name" class="mono"></strong></span>
+        <button onclick="setStateFilter('ALL')" class="text-amber-700 dark:text-amber-300 hover:text-amber-900 dark:hover:text-white font-bold">✕ Clear</button>
+      </div>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- TAB 1: EXECUTIVE & LEAD ANALYTICS DASHBOARD                         -->
+    <!-- =================================================================== -->
+    <section id="tab-analytics" class="space-y-6">
+      <!-- 6 KPI Summary Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3.5">
+        <!-- KPI 1 -->
+        <div class="glass-panel rounded-xl p-4 card-hover border-t-2 border-t-blue-500">
+          <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-semibold">
+            <span>TOTAL SCANNED ROWS</span>
+            <span class="px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400 mono text-[10px]">RAW SCAN</span>
+          </div>
+          <div id="kpi-total-scanned" class="text-2xl font-extrabold text-slate-900 dark:text-white mt-1.5 mono">24</div>
+          <div id="kpi-total-sub" class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">22 App CVEs • 2 Red Hat OS</div>
+        </div>
+
+        <!-- KPI 2 -->
+        <div class="glass-panel rounded-xl p-4 card-hover border-t-2 border-t-indigo-500">
+          <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-semibold">
+            <span>IN-SCOPE ACTIVE APP</span>
+            <span class="px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-400 mono text-[10px]">TARGET</span>
+          </div>
+          <div id="kpi-active-app" class="text-2xl font-extrabold text-indigo-600 dark:text-indigo-300 mt-1.5 mono">18</div>
+          <div id="kpi-active-sub" class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Excludes 00_EXCL &amp; 02_OS</div>
+        </div>
+
+        <!-- KPI 3 -->
+        <div class="glass-panel rounded-xl p-4 card-hover border-t-2 border-t-emerald-500">
+          <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-semibold">
+            <span>AUTOMATED MR CLOSURE</span>
+            <span class="px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 mono text-[10px]">STATES 14+03</span>
+          </div>
+          <div class="flex items-baseline gap-2 mt-1.5">
+            <span id="kpi-automated-count" class="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 mono">14</span>
+            <span id="kpi-automated-pct" class="text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/90 px-1.5 py-0.5 rounded mono">77.8%</span>
+          </div>
+          <div id="kpi-automated-sub" class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">11 Direct + 3 Replicas</div>
+        </div>
+
+        <!-- KPI 4 -->
+        <div class="glass-panel rounded-xl p-4 card-hover border-t-2 border-t-cyan-500">
+          <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-semibold">
+            <span>MULTI-ROUTE REPLICAS</span>
+            <span class="px-1.5 py-0.5 rounded bg-cyan-100 dark:bg-cyan-950 text-cyan-700 dark:text-cyan-400 mono text-[10px]">STATE 03</span>
+          </div>
+          <div id="kpi-replicas-count" class="text-2xl font-extrabold text-cyan-600 dark:text-cyan-300 mt-1.5 mono">3</div>
+          <div id="kpi-replicas-sub" class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Merged to base service</div>
+        </div>
+
+        <!-- KPI 5 -->
+        <div class="glass-panel rounded-xl p-4 card-hover border-t-2 border-t-rose-500">
+          <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-semibold">
+            <span>COMPLEX ROLLBACKS</span>
+            <span class="px-1.5 py-0.5 rounded bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-400 mono text-[10px]">STATE 12</span>
+          </div>
+          <div id="kpi-complex-count" class="text-2xl font-extrabold text-rose-600 dark:text-rose-400 mt-1.5 mono">2</div>
+          <div id="kpi-complex-sub" class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">git checkout -- . (Manual)</div>
+        </div>
+
+        <!-- KPI 6 -->
+        <div class="glass-panel rounded-xl p-4 card-hover border-t-2 border-t-amber-500">
+          <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-semibold">
+            <span>EXCLUSIONS / DRIFT</span>
+            <span class="px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-400 mono text-[10px]">STATES 00/02/08</span>
+          </div>
+          <div id="kpi-excluded-count" class="text-2xl font-extrabold text-amber-600 dark:text-amber-300 mt-1.5 mono">8</div>
+          <div id="kpi-excluded-sub" class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">4 Rule • 2 OS • 1 Drift • 1 Br</div>
+        </div>
+      </div>
+
+      <!-- CHARTS GRID -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5">
+
+        <!-- CHART 1 -->
+        <div class="glass-panel rounded-xl p-4 flex flex-col justify-between card-hover">
+          <div class="flex items-start justify-between gap-2 mb-3">
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-white">1. Developer Workload &amp; Status</h3>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400">Stacked breakdown across developers</p>
+            </div>
+            <div class="flex items-center gap-1 no-print">
+              <button onclick="exportChartSVG('svg-chart-dev', 'developer-workload-v4')" class="px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[10px] font-mono text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-700">SVG</button>
+              <button onclick="exportChartPNG('svg-chart-dev', 'developer-workload-v4')" class="px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[10px] font-mono text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-700">PNG</button>
+            </div>
+          </div>
+          <div id="chart-container-dev" class="w-full overflow-x-auto"></div>
+        </div>
+
+        <!-- CHART 2 -->
+        <div class="glass-panel rounded-xl p-4 flex flex-col justify-between card-hover">
+          <div class="flex items-start justify-between gap-2 mb-3">
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-white">2. Computed Fix Complexity</h3>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400">Simple vs. Medium vs. Complex</p>
+            </div>
+            <div class="flex items-center gap-1 no-print">
+              <button onclick="exportChartSVG('svg-chart-complexity', 'computed-complexity-v4')" class="px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[10px] font-mono text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-700">SVG</button>
+              <button onclick="exportChartPNG('svg-chart-complexity', 'computed-complexity-v4')" class="px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[10px] font-mono text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-700">PNG</button>
+            </div>
+          </div>
+          <div id="chart-container-complexity" class="w-full overflow-x-auto"></div>
+        </div>
+
+        <!-- CHART 3 -->
+        <div class="glass-panel rounded-xl p-4 flex flex-col justify-between card-hover">
+          <div class="flex items-start justify-between gap-2 mb-3">
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-white">3. Exclusion Filter Breakdown</h3>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400">Match reasoning from Global Rules</p>
+            </div>
+            <div class="flex items-center gap-1 no-print">
+              <button onclick="exportChartSVG('svg-chart-exclusions', 'exclusion-engine-breakdown-v4')" class="px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[10px] font-mono text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-700">SVG</button>
+              <button onclick="exportChartPNG('svg-chart-exclusions', 'exclusion-engine-breakdown-v4')" class="px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[10px] font-mono text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-700">PNG</button>
+            </div>
+          </div>
+          <div id="chart-container-exclusions" class="w-full overflow-x-auto"></div>
+        </div>
+
+        <!-- CHART 4 -->
+        <div class="glass-panel rounded-xl p-4 flex flex-col justify-between card-hover">
+          <div class="flex items-start justify-between gap-2 mb-3">
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-white">4. Severity &amp; Remediation</h3>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400">Active vs Excluded by Severity</p>
+            </div>
+            <div class="flex items-center gap-1 no-print">
+              <button onclick="exportChartSVG('svg-chart-severity', 'severity-distribution-v4')" class="px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[10px] font-mono text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-700">SVG</button>
+              <button onclick="exportChartPNG('svg-chart-severity', 'severity-distribution-v4')" class="px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[10px] font-mono text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-700">PNG</button>
+            </div>
+          </div>
+          <div id="chart-container-severity" class="w-full overflow-x-auto"></div>
+        </div>
+
+        <!-- CHART 5 -->
+        <div class="glass-panel rounded-xl p-4 flex flex-col justify-between card-hover">
+          <div class="flex items-start justify-between gap-2 mb-3">
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-white">5. 15-State Pipeline Funnel</h3>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400">Live distribution of all items</p>
+            </div>
+            <div class="flex items-center gap-1 no-print">
+              <button onclick="exportChartSVG('svg-chart-states', '15-state-pipeline-v4')" class="px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[10px] font-mono text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-700">SVG</button>
+              <button onclick="exportChartPNG('svg-chart-states', '15-state-pipeline-v4')" class="px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[10px] font-mono text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-700">PNG</button>
+            </div>
+          </div>
+          <div id="chart-container-states" class="w-full overflow-x-auto"></div>
+        </div>
+
+        <!-- CHART 6 -->
+        <div class="glass-panel rounded-xl p-4 flex flex-col justify-between card-hover">
+          <div class="flex items-start justify-between gap-2 mb-3">
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-white">6. Namespace &amp; Tech Topology</h3>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400">Java vs Node vs OS across NS</p>
+            </div>
+            <div class="flex items-center gap-1 no-print">
+              <button onclick="exportChartSVG('svg-chart-namespace', 'namespace-topology-v4')" class="px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[10px] font-mono text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-700">SVG</button>
+              <button onclick="exportChartPNG('svg-chart-namespace', 'namespace-topology-v4')" class="px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[10px] font-mono text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-700">PNG</button>
+            </div>
+          </div>
+          <div id="chart-container-namespace" class="w-full overflow-x-auto"></div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- TAB 2: DEVELOPER ARTIFACT STATE TRACER (15-STATE PIPELINE)          -->
+    <!-- =================================================================== -->
+    <section id="tab-tracer" class="hidden space-y-6">
+      <!-- Interactive 15-State Lifecycle Filter Ribbon -->
+      <div class="glass-panel rounded-xl p-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <div>
+            <h2 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <span>🧭 Interactive 15-State Deterministic Lifecycle Ribbon</span>
+              <span class="text-[11px] font-normal text-slate-500 dark:text-slate-400">(Click any state pill to filter artifacts)</span>
+            </h2>
+          </div>
+          <button onclick="setStateFilter('ALL')" class="px-2.5 py-1 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs text-blue-700 dark:text-blue-300 font-semibold border border-slate-300 dark:border-slate-700">Show All 15 States</button>
+        </div>
+        <div id="state-ribbon-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-8 gap-2"></div>
+      </div>
+
+      <!-- Developer Summary Strip -->
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 class="text-base font-extrabold text-slate-900 dark:text-white">Microservice Artifact Pipeline Tracer &amp; Diagnostics</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Tracks Branch Resolution, Auto-detected Stack, Build Batching, and Replica Merges</p>
+        </div>
+        <div class="flex items-center gap-2 text-xs">
+          <span class="px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-950/80 border border-emerald-300 dark:border-emerald-700/60 text-emerald-800 dark:text-emerald-300 font-semibold">● 14_MR_CREATED_SUCCESS</span>
+          <span class="px-2.5 py-1 rounded-lg bg-cyan-100 dark:bg-cyan-950/80 border border-cyan-300 dark:border-cyan-700/60 text-cyan-800 dark:text-cyan-300 font-semibold">● 03_REPLICA_MERGED_TO_BASE</span>
+          <span class="px-2.5 py-1 rounded-lg bg-rose-100 dark:bg-rose-950/80 border border-rose-300 dark:border-rose-700/60 text-rose-800 dark:text-rose-300 font-semibold">● 12_BUILD_FAILED_ROLLED_BACK</span>
+          <span class="px-2.5 py-1 rounded-lg bg-amber-100 dark:bg-amber-950/80 border border-amber-300 dark:border-amber-700/60 text-amber-800 dark:text-amber-300 font-semibold">● 06_BASE_BRANCH_NOT_FOUND</span>
+        </div>
+      </div>
+
+      <!-- Microservice Pipeline Cards Container -->
+      <div id="artifact-tracer-cards" class="space-y-4"></div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- TAB 3: ZERO-JSON CONFIG & SERVICE REGISTRY INSPECTOR                -->
+    <!-- =================================================================== -->
+    <section id="tab-config" class="hidden space-y-6">
+      <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
+        <!-- Tab 1 of Master Excel: Global_Config_And_Exclusions -->
+        <div class="xl:col-span-5 glass-panel rounded-xl p-5 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+            <div>
+              <span class="px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-400 border border-blue-300 dark:border-blue-700/50 text-[10px] font-bold mono">TAB 1 OF MASTER EXCEL</span>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white mt-1">Global_Config_And_Exclusions (Zero-JSON)</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Replaces <code class="text-slate-700 dark:text-slate-300">repo-mapping.json</code>. Edit to test live evaluation.</p>
+            </div>
+            <button onclick="applyLiveConfigEdits()" class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 dark:hover:bg-blue-500 text-white text-xs font-bold shadow">Apply Config Live</button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-100 dark:bg-slate-900/90 text-slate-700 dark:text-slate-300 border-b border-slate-300 dark:border-slate-700">
+                  <th class="py-2 px-2.5">Category</th>
+                  <th class="py-2 px-2.5">Config_Key</th>
+                  <th class="py-2 px-2.5">Config_Value (Editable)</th>
+                </tr>
+              </thead>
+              <tbody id="config-table-body" class="divide-y divide-slate-200 dark:divide-slate-800/80"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tab 2 of Master Excel: Service_Registry_Mapping -->
+        <div class="xl:col-span-7 glass-panel rounded-xl p-5 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+            <div>
+              <span class="px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700/50 text-[10px] font-bold mono">TAB 2 OF MASTER EXCEL</span>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white mt-1">Service_Registry_Mapping (1-to-Many Router)</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Auto-populated from unique pairs; updates stack after Git pull.</p>
+            </div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-100 dark:bg-slate-900/90 text-slate-700 dark:text-slate-300 border-b border-slate-300 dark:border-slate-700">
+                  <th class="py-2 px-2">Cluster</th>
+                  <th class="py-2 px-2">Namespace</th>
+                  <th class="py-2 px-2">Asset_Service</th>
+                  <th class="py-2 px-2">Developer</th>
+                  <th class="py-2 px-2">Replica / Base Map</th>
+                  <th class="py-2 px-2">Lane Topology</th>
+                  <th class="py-2 px-2">Base Branch Mode</th>
+                  <th class="py-2 px-2">Post-Pull Tech Stack</th>
+                </tr>
+              </thead>
+              <tbody id="registry-table-body" class="divide-y divide-slate-200 dark:divide-slate-800/80"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- TAB 4: VIRTUALIZED 60K+ VULNERABILITY LINE-ITEM GRID                -->
+    <!-- =================================================================== -->
+    <section id="tab-grid" class="hidden space-y-4">
+      <div class="glass-panel rounded-xl p-4 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>⚡ High-Speed Virtualized Vulnerability Line-Item Explorer</span>
+            <span id="virtual-grid-status" class="px-2.5 py-0.5 rounded-full text-xs font-mono bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-700/60">Showing 24 of 24 rows</span>
+          </h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400">True DOM Virtual Scrolling — renders only visible rows so 60,000+ rows scroll smoothly.</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="toggleStressTest()" class="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 dark:bg-amber-600 dark:hover:bg-amber-500 text-white text-xs font-bold transition">
+            ⚡ Toggle 60,000-Row Stress Test
+          </button>
+          <button onclick="exportFilteredCSV()" class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 text-xs font-semibold transition">
+            📥 Export Filtered Rows (.csv)
+          </button>
+        </div>
+      </div>
+
+      <!-- Virtual Scroll Container -->
+      <div class="glass-panel rounded-xl overflow-hidden border border-slate-300 dark:border-slate-800">
+        <!-- Sticky Table Header -->
+        <div class="overflow-x-auto bg-slate-100/95 dark:bg-slate-900/95 border-b border-slate-300 dark:border-slate-700">
+          <div class="min-w-[1950px] grid grid-cols-12 text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 py-2.5 px-3">
+            <div class="col-span-1">Vuln_ID / Cluster</div>
+            <div class="col-span-2">Namespace &amp; Asset (Replica Map)</div>
+            <div class="col-span-1">Layer &amp; Stack</div>
+            <div class="col-span-2">CVE_ID &amp; Vulnerable Library</div>
+            <div class="col-span-1">Version (Cur → Fix)</div>
+            <div class="col-span-1">Sev / Lane / Dev</div>
+            <div class="col-span-1">Branch &amp; Props Bump</div>
+            <div class="col-span-1">Computed Complexity</div>
+            <div class="col-span-1">15-State Code &amp; Batch</div>
+            <div class="col-span-1">MR Link / Diagnostics</div>
+          </div>
+        </div>
+
+        <!-- Virtual Viewport -->
+        <div id="virtual-scroll-viewport" class="overflow-y-auto overflow-x-auto relative" style="height: 600px;" onscroll="onVirtualScroll()">
+          <div id="virtual-scroll-spacer" class="min-w-[1950px] relative">
+            <div id="virtual-scroll-content" class="absolute left-0 right-0 top-0 divide-y divide-slate-200 dark:divide-slate-800/70"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="max-w-[1600px] w-full mx-auto px-4 lg:px-6 py-4 border-t border-slate-300 dark:border-slate-800/80 text-[11px] text-slate-500 dark:text-slate-400 flex flex-wrap items-center justify-between gap-2 no-print">
+    <div>End-to-End Deterministic (Zero-LLM) Vulnerability Remediation Automation POC • Step 2 Reporting &amp; Artifact State Tracer v4.0</div>
+    <div class="mono">100% Standalone HTML5 • CloudFlare SheetJS + Native Fallback • Vector SVG/PNG/PDF Export</div>
+  </footer>
+
+  <!-- ===================================================================== -->
+  <!-- APPLICATION JAVASCRIPT ENGINE                                         -->
+  <!-- ===================================================================== -->
+  <script>
+    // Theme Toggle Logic
+    function toggleTheme() {
+      document.documentElement.classList.toggle('dark');
+      // Re-render charts so their canvas elements/SVGs pick up the updated background and text hex colors instantly
+      if (filteredVulnData.length > 0) {
+        renderAllCharts();
+      }
+    }
+
+    // Baseline Data Definitions remain unchanged
+    const BASELINE_GLOBAL_CONFIG = [
+      { Config_Category: "1. Cluster Scope", Config_Key: "activeClusterFilter", Config_Value: "DEV", Operational_Behavior_And_CLI_Override: "Options: DEV | PROD | BOTH. Since team works on DEV, tool processes only DEV rows by default (--cluster=DEV)." },
+      { Config_Category: "2. Release Branching", Config_Key: "releaseBranchPatternTemplate", Config_Value: "Release/{MM}_{DD}_{YYYY}", Operational_Behavior_And_CLI_Override: "Pattern template used to construct release branch name (e.g. Release/10_24_2026 or release/1024)." },
+      { Config_Category: "2. Release Branching", Config_Key: "activeReleaseTargetValue", Config_Value: "10_24_2026", Operational_Behavior_And_CLI_Override: "Target release value injected into template -> resolves to Release/10_24_2026 unless service has a custom override." },
+      { Config_Category: "2. Release Branching", Config_Key: "featureBranchTemplate", Config_Value: "feature/vuln-fix-{asset}-{date}", Operational_Behavior_And_CLI_Override: "Feature branch created from verified release branch (e.g. feature/vuln-fix-order-dispatcher-20261020)." },
+      { Config_Category: "3. Build & Batching", Config_Key: "batchSize", Config_Value: "2", Operational_Behavior_And_CLI_Override: "Upgrades and tests 2 libraries at a time per commit checkpoint; rolls back only failed batches." },
+      { Config_Category: "3. Build & Batching", Config_Key: "buildPropertiesFile", Config_Value: "build.properties", Operational_Behavior_And_CLI_Override: "File updated once per feature branch creation." },
+      { Config_Category: "3. Build & Batching", Config_Key: "buildPropertiesKey", Config_Value: "version", Operational_Behavior_And_CLI_Override: "Increments last segment +1 (e.g. version=1.0.23 -> version=1.0.24)." },
+      { Config_Category: "4. Exclusion Rules", Config_Key: "excludeClusters", Config_Value: "PROD", Operational_Behavior_And_CLI_Override: "Comma-separated clusters to skip automatically (marks state 00_EXCLUDED_BY_RULE)." },
+      { Config_Category: "4. Exclusion Rules", Config_Key: "excludeNamespaces", Config_Value: "legacy-archive-ns, sandbox-temp-ns", Operational_Behavior_And_CLI_Override: "Comma-separated namespaces to exclude from automation runs." },
+      { Config_Category: "4. Exclusion Rules", Config_Key: "excludeAssets", Config_Value: "deprecated-legacy-widget, decommissioned-auth-v1", Operational_Behavior_And_CLI_Override: "Comma-separated microservice assets to skip automatically." },
+      { Config_Category: "4. Exclusion Rules", Config_Key: "excludeSeverities", Config_Value: "LOW", Operational_Behavior_And_CLI_Override: "Comma-separated severities to skip (e.g., skip LOW when sprinting on CRITICAL/HIGH/MEDIUM)." },
+      { Config_Category: "4. Exclusion Rules", Config_Key: "excludeGroupings", Config_Value: "Red Hat OS", Operational_Behavior_And_CLI_Override: "Skips OS-level rows during App code execution (retained in dashboard for executive visibility)." }
+    ];
+
+    const BASELINE_SERVICE_REGISTRY = [
+      { Cluster: "DEV", Namespace: "retail-commerce", Asset_Service: "order-dispatcher-service", Assigned_Developer: "dev-alex", Exclude_Service_Flag: "No", Is_Multi_Route_Replica: "No (Base Service)", Base_Service_If_Replica: "order-dispatcher-service", GitLab_Repository_URL: "https://gitlab.com/sandbox-org/retail-commerce/order-dispatcher-service.git", Pipeline_Lane_Mode: "Multi-Lane (Alpha/Beta/Gamma)", Base_Branch_Mode_Or_Override: "USE_GLOBAL_PATTERN", Resolved_Base_Branch: "Release/10_24_2026", Auto_Detected_Tech_Stack: "Java-Gradle (Auto-Detected after Git Pull: build.gradle)" },
+      { Cluster: "DEV", Namespace: "retail-commerce", Asset_Service: "public-gateway-order-dispatcher-service", Assigned_Developer: "dev-alex", Exclude_Service_Flag: "No", Is_Multi_Route_Replica: "Yes (Replica)", Base_Service_If_Replica: "order-dispatcher-service", GitLab_Repository_URL: "Inherited from Base Service", Pipeline_Lane_Mode: "Multi-Lane (Alpha/Beta/Gamma)", Base_Branch_Mode_Or_Override: "INHERITED", Resolved_Base_Branch: "Release/10_24_2026", Auto_Detected_Tech_Stack: "Java-Gradle (Inherited)" },
+      { Cluster: "DEV", Namespace: "retail-commerce", Asset_Service: "partner-route-order-dispatcher-service", Assigned_Developer: "dev-alex", Exclude_Service_Flag: "No", Is_Multi_Route_Replica: "Yes (Replica)", Base_Service_If_Replica: "order-dispatcher-service", GitLab_Repository_URL: "Inherited from Base Service", Pipeline_Lane_Mode: "Multi-Lane (Alpha/Beta/Gamma)", Base_Branch_Mode_Or_Override: "INHERITED", Resolved_Base_Branch: "Release/10_24_2026", Auto_Detected_Tech_Stack: "Java-Gradle (Inherited)" },
+      { Cluster: "DEV", Namespace: "retail-commerce", Asset_Service: "partner-ext-route-order-dispatcher-service", Assigned_Developer: "dev-alex", Exclude_Service_Flag: "No", Is_Multi_Route_Replica: "Yes (Replica)", Base_Service_If_Replica: "order-dispatcher-service", GitLab_Repository_URL: "Inherited from Base Service", Pipeline_Lane_Mode: "Multi-Lane (Alpha/Beta/Gamma)", Base_Branch_Mode_Or_Override: "INHERITED", Resolved_Base_Branch: "Release/10_24_2026", Auto_Detected_Tech_Stack: "Java-Gradle (Inherited)" },
+      { Cluster: "DEV", Namespace: "retail-commerce", Asset_Service: "inventory-sync-worker", Assigned_Developer: "dev-alex", Exclude_Service_Flag: "No", Is_Multi_Route_Replica: "No (Standalone)", Base_Service_If_Replica: "inventory-sync-worker", GitLab_Repository_URL: "https://gitlab.com/sandbox-org/retail-commerce/inventory-sync-worker.git", Pipeline_Lane_Mode: "Single-Lane Only (Live)", Base_Branch_Mode_Or_Override: "USE_GLOBAL_PATTERN", Resolved_Base_Branch: "Release/10_24_2026", Auto_Detected_Tech_Stack: "Java-Gradle (Auto-Detected after Git Pull: build.gradle)" },
+      { Cluster: "DEV", Namespace: "wealth-portal", Asset_Service: "customer-dashboard-ui", Assigned_Developer: "dev-alex", Exclude_Service_Flag: "No", Is_Multi_Route_Replica: "No (Standalone)", Base_Service_If_Replica: "customer-dashboard-ui", GitLab_Repository_URL: "https://gitlab.com/sandbox-org/wealth-portal/customer-dashboard-ui.git", Pipeline_Lane_Mode: "Multi-Lane (Alpha/Beta/Gamma)", Base_Branch_Mode_Or_Override: "USE_GLOBAL_PATTERN", Resolved_Base_Branch: "Release/10_24_2026", Auto_Detected_Tech_Stack: "Node-Yarn (Auto-Detected after Git Pull: package.json + yarn.lock)" },
+      { Cluster: "DEV", Namespace: "wealth-portal", Asset_Service: "portfolio-reporting-ui", Assigned_Developer: "dev-priya", Exclude_Service_Flag: "No", Is_Multi_Route_Replica: "No (Standalone)", Base_Service_If_Replica: "portfolio-reporting-ui", GitLab_Repository_URL: "https://gitlab.com/sandbox-org/wealth-portal/portfolio-reporting-ui.git", Pipeline_Lane_Mode: "Single-Lane Only (Live)", Base_Branch_Mode_Or_Override: "USE_GLOBAL_PATTERN", Resolved_Base_Branch: "Release/10_24_2026", Auto_Detected_Tech_Stack: "Node-Yarn (Auto-Detected after Git Pull: package.json + yarn.lock)" },
+      { Cluster: "DEV", Namespace: "core-banking", Asset_Service: "ledger-settlement-engine", Assigned_Developer: "dev-priya", Exclude_Service_Flag: "No", Is_Multi_Route_Replica: "No (Standalone)", Base_Service_If_Replica: "ledger-settlement-engine", GitLab_Repository_URL: "https://gitlab.com/sandbox-org/core-banking/ledger-settlement-engine.git", Pipeline_Lane_Mode: "Multi-Lane (Alpha/Beta/Gamma)", Base_Branch_Mode_Or_Override: "OVERRIDE: custom_oct_branch", Resolved_Base_Branch: "custom_oct_branch", Auto_Detected_Tech_Stack: "Java-Gradle (Auto-Detected after Git Pull: build.gradle)" },
+      { Cluster: "DEV", Namespace: "core-banking", Asset_Service: "payment-gateway-adapter", Assigned_Developer: "dev-rohan", Exclude_Service_Flag: "No", Is_Multi_Route_Replica: "No (Standalone)", Base_Service_If_Replica: "payment-gateway-adapter", GitLab_Repository_URL: "https://gitlab.com/sandbox-org/core-banking/payment-gateway-adapter.git", Pipeline_Lane_Mode: "Single-Lane Only (Live)", Base_Branch_Mode_Or_Override: "USE_GLOBAL_PATTERN", Resolved_Base_Branch: "Release/10_24_2026 (Missing on GitLab)", Auto_Detected_Tech_Stack: "Unknown (Pending Checkout - Base Branch Missing)" },
+      { Cluster: "DEV", Namespace: "legacy-archive-ns", Asset_Service: "old-batch-archiver", Assigned_Developer: "unassigned", Exclude_Service_Flag: "Yes (Namespace Excluded)", Is_Multi_Route_Replica: "No (Standalone)", Base_Service_If_Replica: "old-batch-archiver", GitLab_Repository_URL: "https://gitlab.com/sandbox-org/legacy-archive-ns/old-batch-archiver.git", Pipeline_Lane_Mode: "Single-Lane Only (Live)", Base_Branch_Mode_Or_Override: "SKIPPED", Resolved_Base_Branch: "N/A (Excluded)", Auto_Detected_Tech_Stack: "Skipped (Excluded Namespace)" },
+      { Cluster: "DEV", Namespace: "wealth-portal", Asset_Service: "deprecated-legacy-widget", Assigned_Developer: "unassigned", Exclude_Service_Flag: "Yes (Asset Excluded)", Is_Multi_Route_Replica: "No (Standalone)", Base_Service_If_Replica: "deprecated-legacy-widget", GitLab_Repository_URL: "https://gitlab.com/sandbox-org/wealth-portal/deprecated-legacy-widget.git", Pipeline_Lane_Mode: "Single-Lane Only (Live)", Base_Branch_Mode_Or_Override: "SKIPPED", Resolved_Base_Branch: "N/A (Excluded)", Auto_Detected_Tech_Stack: "Skipped (Excluded Asset)" }
+    ];
+
+    const BASELINE_MASTER_TRACKER = [
+      { Vuln_ID: "VULN-3001", Cluster: "DEV", Namespace: "retail-commerce", Asset: "order-dispatcher-service", Grouping: "Application", CVE_ID: "CVE-2024-22201", Vulnerable_Library: "org.apache.logging.log4j:log4j-core", Current_Version: "2.14.1", Recommended_Fix_Version: "2.17.1", Severity: "CRITICAL", Target_Date: "2026-10-24", Remaining_Days: 4, Pipeline_Lane: "Stage-Alpha", Assigned_Developer: "dev-alex", Exclusion_Match_Reason: "Included (DEV Active)", Base_Service_Mapped: "order-dispatcher-service", Auto_Detected_Tech_Stack: "Java-Gradle", Computed_Fix_Complexity: "Medium (Multi-CVE SemVer 2.20.0)", Selected_Safe_Version: "2.20.0", Pipeline_Lane_Topology: "Multi-Lane (Alpha/Beta/Gamma)", Base_Branch_Used: "Release/10_24_2026", Feature_Branch: "feature/vuln-fix-order-dispatcher-20261020", Build_Props_Bumped: "1.0.23 -> 1.0.24", Automation_State: "14_MR_CREATED_SUCCESS", Batch_Group: "Batch-1", Commit_Hash: "a81f49c", MR_URL: "https://gitlab.com/sandbox-org/retail-commerce/order-dispatcher-service/-/merge_requests/14", Diagnostic_Notes: "Direct upgrade; resolved 2.17.1 vs 2.20.0 -> 2.20.0" },
+      { Vuln_ID: "VULN-3002", Cluster: "DEV", Namespace: "retail-commerce", Asset: "order-dispatcher-service", Grouping: "Application", CVE_ID: "CVE-2024-22202", Vulnerable_Library: "log4j-core", Current_Version: "2.14.1", Recommended_Fix_Version: "2.20.0", Severity: "HIGH", Target_Date: "2026-10-24", Remaining_Days: 4, Pipeline_Lane: "Stage-Alpha", Assigned_Developer: "dev-alex", Exclusion_Match_Reason: "Included (DEV Active)", Base_Service_Mapped: "order-dispatcher-service", Auto_Detected_Tech_Stack: "Java-Gradle", Computed_Fix_Complexity: "Medium (Multi-CVE SemVer 2.20.0)", Selected_Safe_Version: "2.20.0", Pipeline_Lane_Topology: "Multi-Lane (Alpha/Beta/Gamma)", Base_Branch_Used: "Release/10_24_2026", Feature_Branch: "feature/vuln-fix-order-dispatcher-20261020", Build_Props_Bumped: "1.0.23 -> 1.0.24", Automation_State: "14_MR_CREATED_SUCCESS", Batch_Group: "Batch-1", Commit_Hash: "a81f49c", MR_URL: "https://gitlab.com/sandbox-org/retail-commerce/order-dispatcher-service/-/merge_requests/14", Diagnostic_Notes: "Resolved short name log4j-core via ./gradlew dependencies" },
+      { Vuln_ID: "VULN-3003", Cluster: "DEV", Namespace: "retail-commerce", Asset: "order-dispatcher-service", Grouping: "Application", CVE_ID: "CVE-2024-31001", Vulnerable_Library: "org.yaml:snakeyaml", Current_Version: "1.30", Recommended_Fix_Version: "2.0", Severity: "HIGH", Target_Date: "2026-10-24", Remaining_Days: 4, Pipeline_Lane: "Stage-Alpha", Assigned_Developer: "dev-alex", Exclusion_Match_Reason: "Included (DEV Active)", Base_Service_Mapped: "order-dispatcher-service", Auto_Detected_Tech_Stack: "Java-Gradle", Computed_Fix_Complexity: "Medium (Transitive Constraint)", Selected_Safe_Version: "2.0", Pipeline_Lane_Topology: "Multi-Lane (Alpha/Beta/Gamma)", Base_Branch_Used: "Release/10_24_2026", Feature_Branch: "feature/vuln-fix-order-dispatcher-20261020", Build_Props_Bumped: "1.0.23 -> 1.0.24", Automation_State: "14_MR_CREATED_SUCCESS", Batch_Group: "Batch-1", Commit_Hash: "a81f49c", MR_URL: "https://gitlab.com/sandbox-org/retail-commerce/order-dispatcher-service/-/merge_requests/14", Diagnostic_Notes: "Transitive constraint injected in build.gradle; build passed" },
+      { Vuln_ID: "VULN-3004", Cluster: "DEV", Namespace: "retail-commerce", Asset: "order-dispatcher-service", Grouping: "Application", CVE_ID: "CVE-2024-38816", Vulnerable_Library: "org.springframework:spring-webmvc", Current_Version: "5.3.20", Recommended_Fix_Version: "6.0.12", Severity: "CRITICAL", Target_Date: "2026-10-24", Remaining_Days: 4, Pipeline_Lane: "Stage-Alpha", Assigned_Developer: "dev-alex", Exclusion_Match_Reason: "Included (DEV Active)", Base_Service_Mapped: "order-dispatcher-service", Auto_Detected_Tech_Stack: "Java-Gradle", Computed_Fix_Complexity: "Complex (Compile Failed - Rolled Back)", Selected_Safe_Version: "6.0.12", Pipeline_Lane_Topology: "Multi-Lane (Alpha/Beta/Gamma)", Base_Branch_Used: "Release/10_24_2026", Feature_Branch: "feature/vuln-fix-order-dispatcher-20261020", Build_Props_Bumped: "1.0.23 -> 1.0.24", Automation_State: "12_BUILD_FAILED_ROLLED_BACK", Batch_Group: "Batch-2", Commit_Hash: "ROLLED_BACK", MR_URL: "MANUAL_CODE_FIX_REQUIRED", Diagnostic_Notes: "Compile failed: javax.servlet removed in Spring 6. Auto-rolled back Batch-2." },
+      { Vuln_ID: "VULN-3005", Cluster: "DEV", Namespace: "retail-commerce", Asset: "public-gateway-order-dispatcher-service", Grouping: "Application", CVE_ID: "CVE-2024-22201", Vulnerable_Library: "log4j-core", Current_Version: "2.14.1", Recommended_Fix_Version: "2.20.0", Severity: "CRITICAL", Target_Date: "2026-10-24", Remaining_Days: 4, Pipeline_Lane: "Stage-Alpha", Assigned_Developer: "dev-alex", Exclusion_Match_Reason: "Included (DEV Active)", Base_Service_Mapped: "order-dispatcher-service", Auto_Detected_Tech_Stack: "Java-Gradle", Computed_Fix_Complexity: "Simple (Inherited via Replica Tag)", Selected_Safe_Version: "2.20.0", Pipeline_Lane_Topology: "Multi-Lane (Alpha/Beta/Gamma)", Base_Branch_Used: "Release/10_24_2026", Feature_Branch: "feature/vuln-fix-order-dispatcher-20261020", Build_Props_Bumped: "Inherited", Automation_State: "03_REPLICA_MERGED_TO_BASE", Batch_Group: "Replica", Commit_Hash: "a81f49c", MR_URL: "https://gitlab.com/sandbox-org/retail-commerce/order-dispatcher-service/-/merge_requests/14", Diagnostic_Notes: "Public-Gateway replica linked to order-dispatcher-service." },
+      { Vuln_ID: "VULN-3006", Cluster: "DEV", Namespace: "retail-commerce", Asset: "partner-route-order-dispatcher-service", Grouping: "Application", CVE_ID: "CVE-2024-31001", Vulnerable_Library: "org.yaml:snakeyaml", Current_Version: "1.30", Recommended_Fix_Version: "2.0", Severity: "HIGH", Target_Date: "2026-10-24", Remaining_Days: 4, Pipeline_Lane: "Stage-Alpha", Assigned_Developer: "dev-alex", Exclusion_Match_Reason: "Included (DEV Active)", Base_Service_Mapped: "order-dispatcher-service", Auto_Detected_Tech_Stack: "Java-Gradle", Computed_Fix_Complexity: "Simple (Inherited via Replica Tag)", Selected_Safe_Version: "2.0", Pipeline_Lane_Topology: "Multi-Lane (Alpha/Beta/Gamma)", Base_Branch_Used: "Release/10_24_2026", Feature_Branch: "feature/vuln-fix-order-dispatcher-20261020", Build_Props_Bumped: "Inherited", Automation_State: "03_REPLICA_MERGED_TO_BASE", Batch_Group: "Replica", Commit_Hash: "a81f49c", MR_URL: "https://gitlab.com/sandbox-org/retail-commerce/order-dispatcher-service/-/merge_requests/14", Diagnostic_Notes: "Partner-Route replica linked to order-dispatcher-service." },
+      { Vuln_ID: "VULN-3007", Cluster: "DEV", Namespace: "retail-commerce", Asset: "partner-ext-route-order-dispatcher-service", Grouping: "Application", CVE_ID: "CVE-2024-31001", Vulnerable_Library: "org.yaml:snakeyaml", Current_Version: "1.30", Recommended_Fix_Version: "2.0", Severity: "HIGH", Target_Date: "2026-10-24", Remaining_Days: 4, Pipeline_Lane: "Stage-Beta", Assigned_Developer: "dev-alex", Exclusion_Match_Reason: "Included (DEV Active)", Base_Service_Mapped: "order-dispatcher-service", Auto_Detected_Tech_Stack: "Java-Gradle", Computed_Fix_Complexity: "Simple (Inherited via Replica Tag)", Selected_Safe_Version: "2.0", Pipeline_Lane_Topology: "Multi-Lane (Alpha/Beta/Gamma)", Base_Branch_Used: "Release/10_24_2026", Feature_Branch: "feature/vuln-fix-order-dispatcher-20261020", Build_Props_Bumped: "Inherited", Automation_State: "03_REPLICA_MERGED_TO_BASE", Batch_Group: "Replica", Commit_Hash: "a81f49c", MR_URL: "https://gitlab.com/sandbox-org/retail-commerce/order-dispatcher-service/-/merge_requests/14", Diagnostic_Notes: "Partner-Ext-Route replica linked to order-dispatcher-service." },
+      { Vuln_ID: "VULN-3008", Cluster: "DEV", Namespace: "retail-commerce", Asset: "inventory-sync-worker", Grouping: "Application", CVE_ID: "CVE-2024-29857", Vulnerable_Library: "org.bouncycastle:bcprov-jdk18on", Current_Version: "1.72", Recommended_Fix_Version: "1.78.1", Severity: "HIGH", Target_Date: "2026-10-24", Remaining_Days: 4, Pipeline_Lane: "Single-Live-Lane", Assigned_Developer: "dev-alex", Exclusion_Match_Reason: "Included (DEV Active)", Base_Service_Mapped: "inventory-sync-worker", Auto_Detected_Tech_Stack: "Java-Gradle", Computed_Fix_Complexity: "Simple (Direct Bump Passed)", Selected_Safe_Version: "1.78.1", Pipeline_Lane_Topology: "Single-Lane Only (Live)", Base_Branch_Used: "Release/10_24_2026", Feature_Branch: "feature/vuln-fix-inventory-sync-20261020", Build_Props_Bumped: "3.1.0 -> 3.1.1", Automation_State: "14_MR_CREATED_SUCCESS", Batch_Group: "Batch-1", Commit_Hash: "d44b89e", MR_URL: "https://gitlab.com/sandbox-org/retail-commerce/inventory-sync-worker/-/merge_requests/5", Diagnostic_Notes: "Single-lane service in retail-commerce; Batch-1 passed." },
+      { Vuln_ID: "VULN-3009", Cluster: "DEV", Namespace: "retail-commerce", Asset: "inventory-sync-worker", Grouping: "Application", CVE_ID: "CVE-2024-25710", Vulnerable_Library: "org.apache.commons:commons-compress", Current_Version: "1.21", Recommended_Fix_Version: "1.26.0", Severity: "MEDIUM", Target_Date: "2026-10-24", Remaining_Days: 4, Pipeline_Lane: "Single-Live-Lane", Assigned_Developer: "dev-alex", Exclusion_Match_Reason: "Included (DEV Active)", Base_Service_Mapped: "inventory-sync-worker", Auto_Detected_Tech_Stack: "Java-Gradle", Computed_Fix_Complexity: "Simple (Direct Bump Passed)", Selected_Safe_Version: "1.26.0", Pipeline_Lane_Topology: "Single-Lane Only (Live)", Base_Branch_Used: "Release/10_24_2026", Feature_Branch: "feature/vuln-fix-inventory-sync-20261020", Build_Props_Bumped: "3.1.0 -> 3.1.1", Automation_State: "14_MR_CREATED_SUCCESS", Batch_Group: "Batch-1", Commit_Hash: "d44b89e", MR_URL: "https://gitlab.com/sandbox-org/retail-commerce/inventory-sync-worker/-/merge_requests/5", Diagnostic_Notes: "Upgraded in Batch-1 with bcprov-jdk18on." },
+      { Vuln_ID: "VULN-3010", Cluster: "DEV", Namespace: "wealth-portal", Asset: "customer-dashboard-ui", Grouping: "Application", CVE_ID: "CVE-2024-4068", Vulnerable_Library: "lodash", Current_Version: "4.17.19", Recommended_Fix_Version: "4.17.21", Severity: "HIGH", Target_Date: "2026-10-24", Remaining_Days: 4, Pipeline_Lane: "Stage-Alpha", Assigned_Developer: "dev-alex", Exclusion_Match_Reason: "Included (DEV Active)", Base_Service_Mapped: "customer-dashboard-ui", Auto_Detected_Tech_Stack: "Node-Yarn", Computed_Fix_Complexity: "Simple (Direct Bump Passed)", Selected_Safe_Version: "4.17.21", Pipeline_Lane_Topology: "Multi-Lane (Alpha/Beta/Gamma)", Base_Branch_Used: "Release/10_24_2026", Feature_Branch: "feature/vuln-fix-customer-dashboard-20261020", Build_Props_Bumped: "2.4.10 -> 2.4.11", Automation_State: "14_MR_CREATED_SUCCESS", Batch_Group: "Batch-1", Commit_Hash: "c77d21b", MR_URL: "https://gitlab.com/sandbox-org/wealth-portal/customer-dashboard-ui/-/merge_requests/9", Diagnostic_Notes: "Updated direct dependency in package.json + yarn.lock" },
+      { Vuln_ID: "VULN-3011", Cluster: "DEV", Namespace: "wealth-portal", Asset: "customer-dashboard-ui", Grouping: "Application", CVE_ID: "CVE-2024-45296", Vulnerable_Library: "cookie", Current_Version: "0.4.2", Recommended_Fix_Version: "0.7.0", Severity: "MEDIUM", Target_Date: "2026-10-24", Remaining_Days: 4, Pipeline_Lane: "Stage-Alpha", Assigned_Developer: "dev-alex", Exclusion_Match_Reason: "Included (DEV Active)", Base_Service_Mapped: "customer-dashboard-ui", Auto_Detected_Tech_Stack: "Node-Yarn", Computed_Fix_Complexity: "Medium (Yarn Resolutions Override)", Selected_Safe_Version: "0.7.0", Pipeline_Lane_Topology: "Multi-Lane (Alpha/Beta/Gamma)", Base_Branch_Used: "Release/10_24_2026", Feature_Branch: "feature/vuln-fix-customer-dashboard-20261020", Build_Props_Bumped: "2.4.10 -> 2.4.11", Automation_State: "14_MR_CREATED_SUCCESS", Batch_Group: "Batch-1", Commit_Hash: "c77d21b", MR_URL: "https://gitlab.com/sandbox-org/wealth-portal/customer-dashboard-ui/-/merge_requests/9", Diagnostic_Notes: "Transitive in yarn.lock; injected resolutions in package.json" },
+      { Vuln_ID: "VULN-3012", Cluster: "DEV", Namespace: "wealth-portal", Asset: "customer-dashboard-ui", Grouping: "Application", CVE_ID: "CVE-2024-29041", Vulnerable_Library: "express", Current_Version: "4.17.1", Recommended_Fix_Version: "4.19.2", Severity: "HIGH", Target_Date: "2026-10-24", Remaining_Days: 4, Pipeline_Lane: "Stage-Gamma", Assigned_Developer: "dev-alex", Exclusion_Match_Reason: "Included (DEV Active)", Base_Service_Mapped: "customer-dashboard-ui", Auto_Detected_Tech_Stack: "Node-Yarn", Computed_Fix_Complexity: "N/A (Not in Branch Lockfile)", Selected_Safe_Version: "4.19.2", Pipeline_Lane_Topology: "Multi-Lane (Alpha/Beta/Gamma)", Base_Branch_Used: "Release/10_24_2026", Feature_Branch: "feature/vuln-fix-customer-dashboard-20261020", Build_Props_Bumped: "2.4.10 -> 2.4.11", Automation_State: "08_LIB_NOT_IN_LOCKFILE", Batch_Group: "Skipped", Commit_Hash: "N/A", MR_URL: "N/A", Diagnostic_Notes: "Absent from package.json & yarn.lock on Release/10_24_2026 (Stage-Gamma drift)" },
+      { Vuln_ID: "VULN-3013", Cluster: "DEV", Namespace: "wealth-portal", Asset: "customer-dashboard-ui", Grouping: "Application", CVE_ID: "CVE-2024-39338", Vulnerable_Library: "axios", Current_Version: "0.21.1", Recommended_Fix_Version: "1.7.4", Severity: "HIGH", Target_Date: "2026-10-24", Remaining_Days: 4, Pipeline_Lane: "Stage-Alpha", Assigned_Developer: "dev-alex", Exclusion_Match_Reason: "Included (DEV Active)", Base_Service_Mapped: "customer-dashboard-ui", Auto_Detected_Tech_Stack: "Node-Yarn", Computed_Fix_Complexity: "Complex (Compile Failed - Rolled Back)", Selected_Safe_Version: "1.7.4", Pipeline_Lane_Topology: "Multi-Lane (Alpha/Beta/Gamma)", Base_Branch_Used: "Release/10_24_2026", Feature_Branch: "feature/vuln-fix-customer-dashboard-20261020", Build_Props_Bumped: "2.4.10 -> 2.4.11", Automation_State: "12_BUILD_FAILED_ROLLED_BACK", Batch_Group: "Batch-2", Commit_Hash: "ROLLED_BACK", MR_URL: "MANUAL_CODE_FIX_REQUIRED", Diagnostic_Notes: "TS compile failed: AxiosRequestConfig headers mismatch. Rolled back." },
+      { Vuln_ID: "VULN-3014", Cluster: "DEV", Namespace: "wealth-portal", Asset: "portfolio-reporting-ui", Grouping: "Application", CVE_ID: "CVE-2024-4068", Vulnerable_Library: "lodash", Current_Version: "4.17.19", Recommended_Fix_Version: "4.17.21", Severity: "HIGH", Target_Date: "2026-10-24", Remaining_Days: 4, Pipeline_Lane: "Single-Live-Lane", Assigned_Developer: "dev-priya", Exclusion_Match_Reason: "Included (DEV Active)", Base_Service_Mapped: "portfolio-reporting-ui", Auto_Detected_Tech_Stack: "Node-Yarn", Computed_Fix_Complexity: "Simple (Direct Bump Passed)", Selected_Safe_Version: "4.17.21", Pipeline_Lane_Topology: "Single-Lane Only (Live)", Base_Branch_Used: "Release/10_24_2026", Feature_Branch: "feature/vuln-fix-portfolio-reporting-20261020", Build_Props_Bumped: "1.2.0 -> 1.2.1", Automation_State: "14_MR_CREATED_SUCCESS", Batch_Group: "Batch-1", Commit_Hash: "e19a33f", MR_URL: "https://gitlab.com/sandbox-org/wealth-portal/portfolio-reporting-ui/-/merge_requests/3", Diagnostic_Notes: "Single-lane service in wealth-portal; build passed." },
+      { Vuln_ID: "VULN-3015", Cluster: "DEV", Namespace: "wealth-portal", Asset: "portfolio-reporting-ui", Grouping: "Application", CVE_ID: "CVE-2024-21538", Vulnerable_Library: "cross-spawn", Current_Version: "7.0.3", Recommended_Fix_Version: "7.0.5", Severity: "CRITICAL", Target_Date: "2026-10-24", Remaining_Days: 4, Pipeline_Lane: "Single-Live-Lane", Assigned_Developer: "dev-priya", Exclusion_Match_Reason: "Included (DEV Active)", Base_Service_Mapped: "portfolio-reporting-ui", Auto_Detected_Tech_Stack: "Node-Yarn", Computed_Fix_Complexity: "Medium (Yarn Resolutions Override)", Selected_Safe_Version: "7.0.5", Pipeline_Lane_Topology: "Single-Lane Only (Live)", Base_Branch_Used: "Release/10_24_2026", Feature_Branch: "feature/vuln-fix-portfolio-reporting-20261020", Build_Props_Bumped: "1.2.0 -> 1.2.1", Automation_State: "14_MR_CREATED_SUCCESS", Batch_Group: "Batch-1", Commit_Hash: "e19a33f", MR_URL: "https://gitlab.com/sandbox-org/wealth-portal/portfolio-reporting-ui/-/merge_requests/3", Diagnostic_Notes: "Transitive cross-spawn upgraded via resolutions." },
+      { Vuln_ID: "VULN-3016", Cluster: "DEV", Namespace: "core-banking", Asset: "ledger-settlement-engine", Grouping: "Application", CVE_ID: "CVE-2024-1597", Vulnerable_Library: "org.postgresql:postgresql", Current_Version: "42.3.3", Recommended_Fix_Version: "42.7.2", Severity: "CRITICAL", Target_Date: "2026-10-24", Remaining_Days: 4, Pipeline_Lane: "Stage-Alpha", Assigned_Developer: "dev-priya", Exclusion_Match_Reason: "Included (DEV Active)", Base_Service_Mapped: "ledger-settlement-engine", Auto_Detected_Tech_Stack: "Java-Gradle", Computed_Fix_Complexity: "Simple (Direct Bump Passed)", Selected_Safe_Version: "42.7.2", Pipeline_Lane_Topology: "Multi-Lane (Alpha/Beta/Gamma)", Base_Branch_Used: "custom_oct_branch", Feature_Branch: "feature/vuln-fix-ledger-settlement-20261020", Build_Props_Bumped: "4.1.8 -> 4.1.9", Automation_State: "14_MR_CREATED_SUCCESS", Batch_Group: "Batch-1", Commit_Hash: "f92e10a", MR_URL: "https://gitlab.com/sandbox-org/core-banking/ledger-settlement-engine/-/merge_requests/22", Diagnostic_Notes: "Used custom branch override custom_oct_branch from Registry Tab" },
+      { Vuln_ID: "VULN-3017", Cluster: "DEV", Namespace: "core-banking", Asset: "ledger-settlement-engine", Grouping: "Application", CVE_ID: "CVE-2024-25710", Vulnerable_Library: "org.apache.commons:commons-compress", Current_Version: "1.21", Recommended_Fix_Version: "1.26.0", Severity: "MEDIUM", Target_Date: "2026-10-24", Remaining_Days: 4, Pipeline_Lane: "Stage-Alpha", Assigned_Developer: "dev-priya", Exclusion_Match_Reason: "Included (DEV Active)", Base_Service_Mapped: "ledger-settlement-engine", Auto_Detected_Tech_Stack: "Java-Gradle", Computed_Fix_Complexity: "Simple (Direct Bump Passed)", Selected_Safe_Version: "1.26.0", Pipeline_Lane_Topology: "Multi-Lane (Alpha/Beta/Gamma)", Base_Branch_Used: "custom_oct_branch", Feature_Branch: "feature/vuln-fix-ledger-settlement-20261020", Build_Props_Bumped: "4.1.8 -> 4.1.9", Automation_State: "14_MR_CREATED_SUCCESS", Batch_Group: "Batch-1", Commit_Hash: "f92e10a", MR_URL: "https://gitlab.com/sandbox-org/core-banking/ledger-settlement-engine/-/merge_requests/22", Diagnostic_Notes: "Upgraded in Batch-1 and passed ./gradlew build" },
+      { Vuln_ID: "VULN-3018", Cluster: "DEV", Namespace: "core-banking", Asset: "payment-gateway-adapter", Grouping: "Application", CVE_ID: "CVE-2024-26308", Vulnerable_Library: "com.fasterxml.jackson.core:jackson-databind", Current_Version: "2.13.2", Recommended_Fix_Version: "2.15.4", Severity: "HIGH", Target_Date: "2026-11-30", Remaining_Days: 40, Pipeline_Lane: "Single-Live-Lane", Assigned_Developer: "dev-rohan", Exclusion_Match_Reason: "Included (DEV Active)", Base_Service_Mapped: "payment-gateway-adapter", Auto_Detected_Tech_Stack: "Unknown (Pending Checkout)", Computed_Fix_Complexity: "TBD (Pending Checkout)", Selected_Safe_Version: "2.15.4", Pipeline_Lane_Topology: "Single-Lane Only (Live)", Base_Branch_Used: "Release/10_24_2026 (Missing)", Feature_Branch: "N/A", Build_Props_Bumped: "Not Bumped", Automation_State: "06_BASE_BRANCH_NOT_FOUND", Batch_Group: "Blocked", Commit_Hash: "N/A", MR_URL: "N/A", Diagnostic_Notes: "Release/10_24_2026 not found on GitLab. Set custom override in Tab 2." },
+      { Vuln_ID: "VULN-3019", Cluster: "DEV", Namespace: "legacy-archive-ns", Asset: "old-batch-archiver", Grouping: "Application", CVE_ID: "CVE-2023-1111", Vulnerable_Library: "commons-io:commons-io", Current_Version: "2.6", Recommended_Fix_Version: "2.15.1", Severity: "HIGH", Target_Date: "2026-11-30", Remaining_Days: 40, Pipeline_Lane: "Single-Live-Lane", Assigned_Developer: "unassigned", Exclusion_Match_Reason: "Excluded: Namespace (legacy-archive-ns)", Base_Service_Mapped: "old-batch-archiver", Auto_Detected_Tech_Stack: "Skipped", Computed_Fix_Complexity: "Skipped", Selected_Safe_Version: "2.15.1", Pipeline_Lane_Topology: "Single-Lane Only (Live)", Base_Branch_Used: "N/A", Feature_Branch: "N/A", Build_Props_Bumped: "N/A", Automation_State: "00_EXCLUDED_BY_RULE", Batch_Group: "Excluded", Commit_Hash: "N/A", MR_URL: "N/A", Diagnostic_Notes: "Matched excludeNamespaces rule in Global_Config_And_Exclusions" },
+      { Vuln_ID: "VULN-3020", Cluster: "DEV", Namespace: "wealth-portal", Asset: "deprecated-legacy-widget", Grouping: "Application", CVE_ID: "CVE-2023-2222", Vulnerable_Library: "moment", Current_Version: "2.29.1", Recommended_Fix_Version: "2.30.1", Severity: "MEDIUM", Target_Date: "2026-11-30", Remaining_Days: 40, Pipeline_Lane: "Single-Live-Lane", Assigned_Developer: "unassigned", Exclusion_Match_Reason: "Excluded: Asset (deprecated-legacy-widget)", Base_Service_Mapped: "deprecated-legacy-widget", Auto_Detected_Tech_Stack: "Skipped", Computed_Fix_Complexity: "Skipped", Selected_Safe_Version: "2.30.1", Pipeline_Lane_Topology: "Single-Lane Only (Live)", Base_Branch_Used: "N/A", Feature_Branch: "N/A", Build_Props_Bumped: "N/A", Automation_State: "00_EXCLUDED_BY_RULE", Batch_Group: "Excluded", Commit_Hash: "N/A", MR_URL: "N/A", Diagnostic_Notes: "Matched excludeAssets rule in Global_Config_And_Exclusions" },
+      { Vuln_ID: "VULN-3021", Cluster: "DEV", Namespace: "retail-commerce", Asset: "order-dispatcher-service", Grouping: "Application", CVE_ID: "CVE-2024-9999", Vulnerable_Library: "org.slf4j:slf4j-api", Current_Version: "1.7.30", Recommended_Fix_Version: "1.7.36", Severity: "LOW", Target_Date: "2026-11-30", Remaining_Days: 40, Pipeline_Lane: "Stage-Alpha", Assigned_Developer: "dev-alex", Exclusion_Match_Reason: "Excluded: Severity (LOW)", Base_Service_Mapped: "order-dispatcher-service", Auto_Detected_Tech_Stack: "Java-Gradle", Computed_Fix_Complexity: "Skipped", Selected_Safe_Version: "1.7.36", Pipeline_Lane_Topology: "Multi-Lane (Alpha/Beta/Gamma)", Base_Branch_Used: "N/A", Feature_Branch: "N/A", Build_Props_Bumped: "N/A", Automation_State: "00_EXCLUDED_BY_RULE", Batch_Group: "Excluded", Commit_Hash: "N/A", MR_URL: "N/A", Diagnostic_Notes: "Matched excludeSeverities=LOW rule in Global_Config_And_Exclusions" },
+      { Vuln_ID: "VULN-3022", Cluster: "PROD", Namespace: "core-banking", Asset: "ledger-settlement-engine", Grouping: "Application", CVE_ID: "CVE-2024-1597", Vulnerable_Library: "org.postgresql:postgresql", Current_Version: "42.3.3", Recommended_Fix_Version: "42.7.2", Severity: "CRITICAL", Target_Date: "2026-10-24", Remaining_Days: 4, Pipeline_Lane: "Stage-Alpha", Assigned_Developer: "dev-priya", Exclusion_Match_Reason: "Excluded: Cluster (PROD != DEV)", Base_Service_Mapped: "ledger-settlement-engine", Auto_Detected_Tech_Stack: "Java-Gradle", Computed_Fix_Complexity: "Skipped", Selected_Safe_Version: "42.7.2", Pipeline_Lane_Topology: "Multi-Lane (Alpha/Beta/Gamma)", Base_Branch_Used: "N/A", Feature_Branch: "N/A", Build_Props_Bumped: "N/A", Automation_State: "00_EXCLUDED_BY_RULE", Batch_Group: "Excluded", Commit_Hash: "N/A", MR_URL: "N/A", Diagnostic_Notes: "Filtered out because activeClusterFilter=DEV" },
+      { Vuln_ID: "VULN-3023", Cluster: "DEV", Namespace: "retail-commerce", Asset: "order-dispatcher-service", Grouping: "Red Hat OS", CVE_ID: "RHSA-2024:1890", Vulnerable_Library: "openssl-libs", Current_Version: "1.1.1k-7", Recommended_Fix_Version: "1.1.1k-12.el8_9", Severity: "HIGH", Target_Date: "2026-10-24", Remaining_Days: 4, Pipeline_Lane: "Stage-Alpha", Assigned_Developer: "infra-team", Exclusion_Match_Reason: "Excluded: Grouping (Red Hat OS)", Base_Service_Mapped: "order-dispatcher-service", Auto_Detected_Tech_Stack: "RHEL-Container-OS", Computed_Fix_Complexity: "OS-Image-Layer", Selected_Safe_Version: "1.1.1k-12.el8_9", Pipeline_Lane_Topology: "Multi-Lane (Alpha/Beta/Gamma)", Base_Branch_Used: "N/A", Feature_Branch: "N/A", Build_Props_Bumped: "N/A", Automation_State: "02_OS_LAYER_SKIPPED", Batch_Group: "OS-Image", Commit_Hash: "N/A", MR_URL: "N/A", Diagnostic_Notes: "Red Hat OS package; remediated via base UBI image tag" },
+      { Vuln_ID: "VULN-3024", Cluster: "DEV", Namespace: "wealth-portal", Asset: "customer-dashboard-ui", Grouping: "Red Hat OS", CVE_ID: "RHSA-2024:3011", Vulnerable_Library: "curl-minimal", Current_Version: "7.61.1-30", Recommended_Fix_Version: "7.61.1-34.el8", Severity: "LOW", Target_Date: "2026-10-24", Remaining_Days: 4, Pipeline_Lane: "Stage-Alpha", Assigned_Developer: "infra-team", Exclusion_Match_Reason: "Excluded: Grouping (Red Hat OS)", Base_Service_Mapped: "customer-dashboard-ui", Auto_Detected_Tech_Stack: "RHEL-Container-OS", Computed_Fix_Complexity: "OS-Image-Layer", Selected_Safe_Version: "7.61.1-34.el8", Pipeline_Lane_Topology: "Multi-Lane (Alpha/Beta/Gamma)", Base_Branch_Used: "N/A", Feature_Branch: "N/A", Build_Props_Bumped: "N/A", Automation_State: "02_OS_LAYER_SKIPPED", Batch_Group: "OS-Image", Commit_Hash: "N/A", MR_URL: "N/A", Diagnostic_Notes: "Red Hat OS package; remediated via base Node-UBI image tag" }
+    ];
+
+    const ALL_15_STATES = [
+      { code: "00_EXCLUDED_BY_RULE", short: "00 Excluded", phase: "0. Filter", color: "#64748b", desc: "Matched Tab 1 exclusion rule (Cluster, Namespace, Asset, or Severity)." },
+      { code: "01_NEW_UNASSIGNED", short: "01 Unassigned", phase: "1. Triage", color: "#94a3b8", desc: "Raw vulnerability row ingested prior to assignment." },
+      { code: "02_OS_LAYER_SKIPPED", short: "02 OS Layer", phase: "1. Triage", color: "#a855f7", desc: "Red Hat OS package (~43K+ rows); remediated via container UBI base image." },
+      { code: "03_REPLICA_MERGED_TO_BASE", short: "03 Replica->Base", phase: "1. Triage", color: "#06b6d4", desc: "Multi-route replica linked to Base Service; promote Jenkins tag in Phase 2." },
+      { code: "04_ASSIGNED_PENDING", short: "04 Queued", phase: "2. Git Setup", color: "#3b82f6", desc: "Assigned to developer; queued for repository checkout." },
+      { code: "05_BASE_BRANCH_MATCHED", short: "05 Branch OK", phase: "2. Git Setup", color: "#0ea5e9", desc: "Release/10_24_2026 or custom branch override verified on remote GitLab." },
+      { code: "06_BASE_BRANCH_NOT_FOUND", short: "06 Branch Missing", phase: "2. Git Setup", color: "#f59e0b", desc: "Release branch missing on GitLab; requires Tab 2 custom override." },
+      { code: "07_CHECKOUT_AND_VERSION_BUMPED", short: "07 Props Bumped", phase: "2. Git Setup", color: "#6366f1", desc: "Feature branch created, Tech Stack auto-detected, build.properties bumped (+1)." },
+      { code: "08_LIB_NOT_IN_LOCKFILE", short: "08 Lockfile Drift", phase: "3. Upgrade", color: "#eab308", desc: "Library absent from branch lockfile (e.g. Stage-Gamma pipeline drift)." },
+      { code: "09_ARTIFACTORY_VERSION_MISSING", short: "09 Artifactory Miss", phase: "3. Upgrade", color: "#f97316", desc: "Recommended version missing in internal Artifactory." },
+      { code: "10_BATCH_UPGRADED_TESTING", short: "10 Batch Testing", phase: "3. Upgrade", color: "#8b5cf6", desc: "Batch-of-2 upgraded locally; running Gradle/Yarn compile verification." },
+      { code: "11_BUILD_SUCCESS_COMMITTED", short: "11 Batch Committed", phase: "4. Build", color: "#14b8a6", desc: "Batch-of-2 passed local build; checkpoint committed." },
+      { code: "12_BUILD_FAILED_ROLLED_BACK", short: "12 Rolled Back", phase: "4. Build", color: "#f43f5e", desc: "Breaking API change failed build; auto-rolled back via git checkout -- ." },
+      { code: "13_READY_FOR_MR", short: "13 Ready for MR", phase: "5. Closure", color: "#22c55e", desc: "All batches evaluated; local feature branch ready for GitLab push." },
+      { code: "14_MR_CREATED_SUCCESS", short: "14 MR Created", phase: "5. Closure", color: "#10b981", desc: "Feature branch pushed and GitLab Merge Request raised & synced." }
+    ];
+
+    let globalConfigData = JSON.parse(JSON.stringify(BASELINE_GLOBAL_CONFIG));
+    let serviceRegistryData = JSON.parse(JSON.stringify(BASELINE_SERVICE_REGISTRY));
+    let masterVulnData = JSON.parse(JSON.stringify(BASELINE_MASTER_TRACKER));
+    let filteredVulnData = [];
+
+    let isStressTestActive = false;
+    let currentClusterFilter = "BOTH";
+    let currentGroupingFilter = "ALL";
+    let currentStateFilter = "ALL";
+    let currentZoom = 1.0;
+
+    const VIRTUAL_ROW_HEIGHT = 56;
+    const VIRTUAL_BUFFER = 8;
+
+    window.addEventListener("DOMContentLoaded", () => {
+      setClusterFilter("DEV");
+      renderConfigAndRegistryTables();
+      showToast("Loaded Step 1 v4 Baseline (master-vulnerabilities-input-dev-v4.xlsx & dev-report-dev-alex-v4.xlsx)", "emerald");
+    });
+
+    function showToast(message, color = "blue") {
+      const container = document.getElementById("toast-container");
+      const toast = document.createElement("div");
+      const borderColors = {
+        blue: "border-blue-500 bg-blue-50 dark:bg-slate-900/95 text-blue-900 dark:text-blue-200",
+        emerald: "border-emerald-500 bg-emerald-50 dark:bg-slate-900/95 text-emerald-900 dark:text-emerald-200",
+        amber: "border-amber-500 bg-amber-50 dark:bg-slate-900/95 text-amber-900 dark:text-amber-200",
+        rose: "border-rose-500 bg-rose-50 dark:bg-slate-900/95 text-rose-900 dark:text-rose-200"
+      };
+      toast.className = `px-4 py-2.5 rounded-xl border-l-4 shadow-xl text-xs font-semibold transition-all duration-300 ${borderColors[color] || borderColors.blue}`;
+      toast.innerHTML = message;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = "0";
+        setTimeout(() => toast.remove(), 300);
+      }, 3600);
+    }
+
+    function switchMainTab(tabId) {
+      ["tab-analytics", "tab-tracer", "tab-config", "tab-grid"].forEach(id => {
+        const el = document.getElementById(id);
+        const btn = document.getElementById("btn-" + id);
+        if (id === tabId) {
+          el.classList.remove("hidden");
+          btn.className = "tab-btn px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 bg-blue-600 text-white shadow-sm";
+        } else {
+          el.classList.add("hidden");
+          btn.className = "tab-btn px-3.5 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-800";
+        }
+      });
+      if (tabId === "tab-grid") {
+        onVirtualScroll();
+      }
+    }
+
+    function setClusterFilter(cluster) {
+      currentClusterFilter = cluster;
+      ["DEV", "PROD", "BOTH"].forEach(c => {
+        const btn = document.getElementById("flt-cluster-" + c);
+        if (c === cluster) {
+          btn.className = "px-2.5 py-1 rounded-md font-bold text-[11px] bg-blue-600 text-white";
+        } else {
+          btn.className = "px-2.5 py-1 rounded-md font-bold text-[11px] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white";
+        }
+      });
+      document.getElementById("banner-cluster").textContent = cluster;
+      applyAllFilters();
+    }
+
+    function setGroupingFilter(grp) {
+      currentGroupingFilter = grp;
+      const map = { "ALL": "flt-grp-ALL", "Application": "flt-grp-Application", "Red Hat OS": "flt-grp-OS" };
+      Object.keys(map).forEach(k => {
+        const btn = document.getElementById(map[k]);
+        if (k === grp) {
+          btn.className = "px-2.5 py-1 rounded-md font-bold text-[11px] bg-indigo-600 text-white";
+        } else {
+          btn.className = "px-2.5 py-1 rounded-md font-bold text-[11px] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white";
+        }
+      });
+      applyAllFilters();
+    }
+
+    function setStateFilter(stateCode) {
+      currentStateFilter = stateCode;
+      const pill = document.getElementById("active-state-filter-pill");
+      if (stateCode === "ALL") {
+        pill.classList.add("hidden");
+        pill.classList.remove("flex");
+      } else {
+        pill.classList.remove("hidden");
+        pill.classList.add("flex");
+        document.getElementById("active-state-filter-name").textContent = stateCode;
+      }
+      applyAllFilters();
+    }
+
+    function resetAllFilters() {
+      document.getElementById("flt-namespace").value = "ALL";
+      document.getElementById("flt-lane").value = "ALL";
+      document.getElementById("flt-dev").value = "ALL";
+      document.getElementById("flt-search").value = "";
+      currentStateFilter = "ALL";
+      document.getElementById("active-state-filter-pill").classList.add("hidden");
+      setGroupingFilter("ALL");
+      setClusterFilter("BOTH");
+    }
+
+    function applyAllFilters() {
+      const ns = document.getElementById("flt-namespace").value;
+      const lane = document.getElementById("flt-lane").value;
+      const dev = document.getElementById("flt-dev").value;
+      const q = (document.getElementById("flt-search").value || "").trim().toLowerCase();
+
+      filteredVulnData = masterVulnData.filter(row => {
+        if (currentClusterFilter !== "BOTH" && row.Cluster !== currentClusterFilter) return false;
+        if (currentGroupingFilter !== "ALL" && row.Grouping !== currentGroupingFilter) return false;
+        if (ns !== "ALL" && row.Namespace !== ns) return false;
+        if (lane !== "ALL" && row.Pipeline_Lane !== lane) return false;
+        if (dev !== "ALL" && row.Assigned_Developer !== dev) return false;
+        if (currentStateFilter !== "ALL" && row.Automation_State !== currentStateFilter) return false;
+        if (q) {
+          const hay = `${row.Vuln_ID} ${row.CVE_ID} ${row.Asset} ${row.Vulnerable_Library} ${row.Automation_State} ${row.Computed_Fix_Complexity} ${row.Diagnostic_Notes}`.toLowerCase();
+          if (!hay.includes(q)) return false;
+        }
+        return true;
+      });
+
+      document.getElementById("badge-grid-count").textContent = filteredVulnData.length.toLocaleString();
+      document.getElementById("virtual-grid-status").textContent = `Showing ${filteredVulnData.length.toLocaleString()} of ${masterVulnData.length.toLocaleString()} rows`;
+
+      updateKPICards();
+      renderAllCharts();
+      renderStateRibbonAndArtifactCards();
+      setupVirtualScroller();
+    }
+
+    function updateKPICards() {
+      const total = filteredVulnData.length;
+      let appCount = 0, osCount = 0;
+      let activeAppCount = 0;
+      let mrSuccessCount = 0, replicaCount = 0;
+      let complexRollbackCount = 0;
+      let ruleExcludedCount = 0, driftCount = 0, branchMissingCount = 0;
+
+      for (let i = 0; i < total; i++) {
+        const r = filteredVulnData[i];
+        if (r.Grouping === "Red Hat OS") osCount++;
+        else appCount++;
+
+        const st = r.Automation_State;
+        if (st === "00_EXCLUDED_BY_RULE") ruleExcludedCount++;
+        else if (st === "02_OS_LAYER_SKIPPED") {}
+        else {
+          activeAppCount++;
+          if (st === "14_MR_CREATED_SUCCESS" || st === "11_BUILD_SUCCESS_COMMITTED") mrSuccessCount++;
+          else if (st === "03_REPLICA_MERGED_TO_BASE") replicaCount++;
+          else if (st === "12_BUILD_FAILED_ROLLED_BACK") complexRollbackCount++;
+          else if (st === "08_LIB_NOT_IN_LOCKFILE") driftCount++;
+          else if (st === "06_BASE_BRANCH_NOT_FOUND") branchMissingCount++;
+        }
+      }
+
+      const automatedTotal = mrSuccessCount + replicaCount;
+      const closureRate = activeAppCount > 0 ? ((automatedTotal / activeAppCount) * 100).toFixed(1) : "0.0";
+      const totalExcludedAndDrift = ruleExcludedCount + osCount + driftCount + branchMissingCount;
+
+      document.getElementById("kpi-total-scanned").textContent = total.toLocaleString();
+      document.getElementById("kpi-total-sub").textContent = `${appCount.toLocaleString()} App CVEs • ${osCount.toLocaleString()} Red Hat OS`;
+      document.getElementById("kpi-active-app").textContent = activeAppCount.toLocaleString();
+      document.getElementById("kpi-active-sub").textContent = `Excludes ${ruleExcludedCount.toLocaleString()} Rule Excl & ${osCount.toLocaleString()} OS`;
+      document.getElementById("kpi-automated-count").textContent = automatedTotal.toLocaleString();
+      document.getElementById("kpi-automated-pct").textContent = `${closureRate}%`;
+      document.getElementById("kpi-automated-sub").textContent = `${mrSuccessCount.toLocaleString()} MR + ${replicaCount.toLocaleString()} Replicas`;
+      document.getElementById("kpi-replicas-count").textContent = replicaCount.toLocaleString();
+      document.getElementById("kpi-replicas-sub").textContent = `Merged to Base Service Tag`;
+      document.getElementById("kpi-complex-count").textContent = complexRollbackCount.toLocaleString();
+      document.getElementById("kpi-complex-sub").textContent = `Rolled back via git checkout`;
+      document.getElementById("kpi-excluded-count").textContent = totalExcludedAndDrift.toLocaleString();
+      document.getElementById("kpi-excluded-sub").textContent = `${ruleExcludedCount.toLocaleString()} Excl • ${osCount.toLocaleString()} OS • ${driftCount.toLocaleString()} Drift`;
+    }
+
+    function renderAllCharts() {
+      renderDevWorkloadChart();
+      renderComplexityChart();
+      renderExclusionsChart();
+      renderSeverityChart();
+      render15StatesChart();
+      renderNamespaceTopologyChart();
+    }
+
+    function getChartColors() {
+      const isDark = document.documentElement.classList.contains('dark');
+      return {
+        bg: isDark ? "#0f172a" : "#ffffff",
+        barBg: isDark ? "#1e293b" : "#f1f5f9",
+        textMain: isDark ? "#e2e8f0" : "#0f172a",
+        textMuted: isDark ? "#cbd5e1" : "#64748b"
+      };
+    }
+
+    function renderDevWorkloadChart() {
+      const colors = getChartColors();
+      const devs = ["dev-alex", "dev-priya", "dev-rohan", "infra-team", "unassigned"];
+      const stats = {};
+      devs.forEach(d => stats[d] = { mr: 0, replica: 0, complex: 0, blocked: 0, excluded: 0, total: 0 });
+
+      filteredVulnData.forEach(r => {
+        const d = stats[r.Assigned_Developer] ? r.Assigned_Developer : "unassigned";
+        stats[d].total++;
+        const st = r.Automation_State;
+        if (st === "14_MR_CREATED_SUCCESS" || st === "11_BUILD_SUCCESS_COMMITTED") stats[d].mr++;
+        else if (st === "03_REPLICA_MERGED_TO_BASE") stats[d].replica++;
+        else if (st === "12_BUILD_FAILED_ROLLED_BACK") stats[d].complex++;
+        else if (st === "06_BASE_BRANCH_NOT_FOUND" || st === "08_LIB_NOT_IN_LOCKFILE" || st === "09_ARTIFACTORY_VERSION_MISSING") stats[d].blocked++;
+        else stats[d].excluded++;
+      });
+
+      const maxVal = Math.max(1, ...devs.map(d => stats[d].total));
+      const width = 460, height = 235;
+      let barsSvg = "";
+
+      devs.forEach((d, idx) => {
+        const y = 28 + idx * 36;
+        const s = stats[d];
+        const barMaxW = 250;
+        let xCursor = 115;
+
+        const segments = [
+          { val: s.mr, color: "#10b981", label: "MR Created" },
+          { val: s.replica, color: "#06b6d4", label: "Replica" },
+          { val: s.complex, color: "#f43f5e", label: "Rolled Back" },
+          { val: s.blocked, color: "#f59e0b", label: "Drift/Blocked" },
+          { val: s.excluded, color: "#64748b", label: "Excluded/OS" }
+        ];
+
+        barsSvg += `<text x="108" y="${y + 14}" text-anchor="end" fill="${colors.textMain}" font-size="11" font-family="JetBrains Mono, monospace" font-weight="600">${d}</text>`;
+        barsSvg += `<rect x="115" y="${y}" width="${barMaxW}" height="20" rx="4" fill="${colors.barBg}"/>`;
+
+        segments.forEach(seg => {
+          if (seg.val > 0) {
+            const w = Math.max(4, (seg.val / maxVal) * barMaxW);
+            barsSvg += `<rect x="${xCursor}" y="${y}" width="${w}" height="20" fill="${seg.color}"><title>${d} - ${seg.label}: ${seg.val.toLocaleString()}</title></rect>`;
+            xCursor += w;
+          }
+        });
+
+        barsSvg += `<text x="${xCursor + 8}" y="${y + 14}" fill="${colors.textMuted}" font-size="11" font-family="JetBrains Mono, monospace" font-weight="600">${s.total.toLocaleString()}</text>`;
+      });
+
+      const legend = `
+        <g transform="translate(15, 212)" font-size="10" fill="${colors.textMuted}" font-family="Inter, sans-serif">
+          <rect x="0" y="-8" width="9" height="9" rx="2" fill="#10b981"/><text x="13" y="0">MR Created</text>
+          <rect x="82" y="-8" width="9" height="9" rx="2" fill="#06b6d4"/><text x="95" y="0">Replica</text>
+          <rect x="148" y="-8" width="9" height="9" rx="2" fill="#f43f5e"/><text x="161" y="0">Complex Rollback</text>
+          <rect x="262" y="-8" width="9" height="9" rx="2" fill="#f59e0b"/><text x="275" y="0">Blocked/Drift</text>
+          <rect x="355" y="-8" width="9" height="9" rx="2" fill="#64748b"/><text x="368" y="0">Excl/OS</text>
+        </g>
+      `;
+
+      document.getElementById("chart-container-dev").innerHTML = `
+        <svg id="svg-chart-dev" viewBox="0 0 ${width} ${height}" class="w-full h-auto">
+          <rect width="${width}" height="${height}" fill="${colors.bg}" rx="8"/>
+          ${barsSvg}
+          ${legend}
+        </svg>
+      `;
+    }
+
+    function renderComplexityChart() {
+      const colors = getChartColors();
+      const buckets = [
+        { key: "Simple (Direct Bump)", match: c => c.includes("Simple (Direct"), color: "#10b981", count: 0 },
+        { key: "Simple (Replica Tag)", match: c => c.includes("Replica"), color: "#06b6d4", count: 0 },
+        { key: "Medium (SemVer/Transitive)", match: c => c.includes("Medium"), color: "#3b82f6", count: 0 },
+        { key: "Complex (Rolled Back)", match: c => c.includes("Complex"), color: "#f43f5e", count: 0 },
+        { key: "Drift / Pending Branch", match: c => c.includes("Not in Branch") || c.includes("TBD"), color: "#f59e0b", count: 0 },
+        { key: "Skipped / OS Layer", match: c => c.includes("Skipped") || c.includes("OS-Image"), color: "#64748b", count: 0 }
+      ];
+
+      filteredVulnData.forEach(r => {
+        const comp = r.Computed_Fix_Complexity || "";
+        const found = buckets.find(b => b.match(comp));
+        if (found) found.count++;
+        else buckets[5].count++;
+      });
+
+      const total = Math.max(1, filteredVulnData.length);
+      const width = 460, height = 235;
+      let svgRows = "";
+
+      buckets.forEach((b, idx) => {
+        const y = 18 + idx * 34;
+        const pct = ((b.count / total) * 100).toFixed(1);
+        const barW = Math.max(2, (b.count / total) * 190);
+        svgRows += `
+          <text x="155" y="${y + 13}" text-anchor="end" fill="${colors.textMain}" font-size="10.5" font-family="Inter, sans-serif" font-weight="600">${b.key}</text>
+          <rect x="165" y="${y}" width="190" height="18" rx="4" fill="${colors.barBg}"/>
+          <rect x="165" y="${y}" width="${barW}" height="18" rx="4" fill="${b.color}"/>
+          <text x="365" y="${y + 13}" fill="${colors.textMuted}" font-size="10.5" font-family="JetBrains Mono, monospace">${b.count.toLocaleString()} (${pct}%)</text>
+        `;
+      });
+
+      document.getElementById("chart-container-complexity").innerHTML = `
+        <svg id="svg-chart-complexity" viewBox="0 0 ${width} ${height}" class="w-full h-auto">
+          <rect width="${width}" height="${height}" fill="${colors.bg}" rx="8"/>
+          ${svgRows}
+        </svg>
+      `;
+    }
+
+    function renderExclusionsChart() {
+      const colors = getChartColors();
+      const reasons = [
+        { label: "Active In-Scope (DEV)", match: r => r.Exclusion_Match_Reason.includes("Included"), color: "#10b981", count: 0 },
+        { label: "Excluded: Grouping (Red Hat OS)", match: r => r.Exclusion_Match_Reason.includes("Red Hat OS"), color: "#a855f7", count: 0 },
+        { label: "Excluded: Severity (LOW)", match: r => r.Exclusion_Match_Reason.includes("Severity"), color: "#f59e0b", count: 0 },
+        { label: "Excluded: Namespace (legacy)", match: r => r.Exclusion_Match_Reason.includes("Namespace"), color: "#64748b", count: 0 },
+        { label: "Excluded: Asset (deprecated)", match: r => r.Exclusion_Match_Reason.includes("Asset"), color: "#94a3b8", count: 0 },
+        { label: "Excluded: Cluster (PROD!=DEV)", match: r => r.Exclusion_Match_Reason.includes("Cluster"), color: "#ec4899", count: 0 }
+      ];
+
+      filteredVulnData.forEach(r => {
+        const found = reasons.find(item => item.match(r));
+        if (found) found.count++;
+      });
+
+      const maxC = Math.max(1, ...reasons.map(r => r.count));
+      const width = 460, height = 235;
+      let rows = "";
+
+      reasons.forEach((item, i) => {
+        const y = 18 + i * 34;
+        const w = Math.max(3, (item.count / maxC) * 200);
+        rows += `
+          <text x="172" y="${y + 13}" text-anchor="end" fill="${colors.textMain}" font-size="10.2" font-family="Inter, sans-serif" font-weight="600">${item.label}</text>
+          <rect x="180" y="${y}" width="200" height="18" rx="4" fill="${colors.barBg}"/>
+          <rect x="180" y="${y}" width="${w}" height="18" rx="4" fill="${item.color}"/>
+          <text x="388" y="${y + 13}" fill="${colors.textMuted}" font-size="10.5" font-family="JetBrains Mono, monospace" font-weight="600">${item.count.toLocaleString()}</text>
+        `;
+      });
+
+      document.getElementById("chart-container-exclusions").innerHTML = `
+        <svg id="svg-chart-exclusions" viewBox="0 0 ${width} ${height}" class="w-full h-auto">
+          <rect width="${width}" height="${height}" fill="${colors.bg}" rx="8"/>
+          ${rows}
+        </svg>
+      `;
+    }
+
+    function renderSeverityChart() {
+      const colors = getChartColors();
+      const sevs = ["CRITICAL", "HIGH", "MEDIUM", "LOW"];
+      const sevColors = { CRITICAL: "#f43f5e", HIGH: "#f97316", MEDIUM: "#eab308", LOW: "#64748b" };
+      const data = {};
+      sevs.forEach(s => data[s] = { active: 0, skipped: 0 });
+
+      filteredVulnData.forEach(r => {
+        const s = data[r.Severity] ? r.Severity : "LOW";
+        if (r.Automation_State === "00_EXCLUDED_BY_RULE" || r.Automation_State === "02_OS_LAYER_SKIPPED") {
+          data[s].skipped++;
+        } else {
+          data[s].active++;
+        }
+      });
+
+      const maxT = Math.max(1, ...sevs.map(s => data[s].active + data[s].skipped));
+      const width = 460, height = 235;
+      let bars = "";
+
+      sevs.forEach((s, idx) => {
+        const y = 26 + idx * 42;
+        const actW = (data[s].active / maxT) * 240;
+        const skpW = (data[s].skipped / maxT) * 240;
+        bars += `
+          <text x="85" y="${y + 15}" text-anchor="end" fill="${sevColors[s]}" font-size="11" font-family="JetBrains Mono, monospace" font-weight="700">${s}</text>
+          <rect x="95" y="${y}" width="240" height="22" rx="4" fill="${colors.barBg}"/>
+          <rect x="95" y="${y}" width="${actW}" height="22" rx="3" fill="${sevColors[s]}"/>
+          <rect x="${95 + actW}" y="${y}" width="${skpW}" height="22" rx="3" fill="#94a3b8" opacity="0.7"/>
+          <text x="345" y="${y + 15}" fill="${colors.textMuted}" font-size="10.5" font-family="JetBrains Mono, monospace">${data[s].active.toLocaleString()} Act / ${data[s].skipped.toLocaleString()} Skp</text>
+        `;
+      });
+
+      document.getElementById("chart-container-severity").innerHTML = `
+        <svg id="svg-chart-severity" viewBox="0 0 ${width} ${height}" class="w-full h-auto">
+          <rect width="${width}" height="${height}" fill="${colors.bg}" rx="8"/>
+          ${bars}
+          <g transform="translate(95, 212)" font-size="10" fill="${colors.textMuted}">
+            <rect x="0" y="-8" width="10" height="10" rx="2" fill="#f97316"/><text x="15" y="0">Active In-Scope App CVE</text>
+            <rect x="155" y="-8" width="10" height="10" rx="2" fill="#94a3b8"/><text x="170" y="0">Excluded by Rule or Red Hat OS</text>
+          </g>
+        </svg>
+      `;
+    }
+
+    function render15StatesChart() {
+      const colors = getChartColors();
+      const counts = {};
+      ALL_15_STATES.forEach(s => counts[s.code] = 0);
+      filteredVulnData.forEach(r => {
+        if (counts[r.Automation_State] !== undefined) counts[r.Automation_State]++;
+      });
+
+      const activeStates = ALL_15_STATES.filter(s => counts[s.code] > 0);
+      const displayStates = activeStates.length > 0 ? activeStates.slice(0, 7) : ALL_15_STATES.slice(0, 7);
+      const maxS = Math.max(1, ...displayStates.map(s => counts[s.code]));
+
+      const width = 460, height = 235;
+      let rows = "";
+      displayStates.forEach((st, i) => {
+        const y = 16 + i * 30;
+        const c = counts[st.code];
+        const w = Math.max(4, (c / maxS) * 195);
+        rows += `
+          <text x="180" y="${y + 13}" text-anchor="end" fill="${colors.textMain}" font-size="9.8" font-family="JetBrains Mono, monospace">${st.code.slice(0, 22)}</text>
+          <rect x="188" y="${y}" width="195" height="17" rx="3" fill="${colors.barBg}"/>
+          <rect x="188" y="${y}" width="${w}" height="17" rx="3" fill="${st.color}"/>
+          <text x="390" y="${y + 13}" fill="${colors.textMuted}" font-size="10" font-family="JetBrains Mono, monospace" font-weight="600">${c.toLocaleString()}</text>
+        `;
+      });
+
+      document.getElementById("chart-container-states").innerHTML = `
+        <svg id="svg-chart-states" viewBox="0 0 ${width} ${height}" class="w-full h-auto">
+          <rect width="${width}" height="${height}" fill="${colors.bg}" rx="8"/>
+          ${rows}
+        </svg>
+      `;
+    }
+
+    function renderNamespaceTopologyChart() {
+      const colors = getChartColors();
+      const namespaces = ["retail-commerce", "wealth-portal", "core-banking", "legacy-archive-ns"];
+      const nsStats = {};
+      namespaces.forEach(n => nsStats[n] = { gradle: 0, yarn: 0, os: 0, other: 0 });
+
+      filteredVulnData.forEach(r => {
+        const n = nsStats[r.Namespace] ? r.Namespace : "retail-commerce";
+        const st = r.Auto_Detected_Tech_Stack || "";
+        if (st.includes("Java-Gradle")) nsStats[n].gradle++;
+        else if (st.includes("Node-Yarn")) nsStats[n].yarn++;
+        else if (st.includes("RHEL")) nsStats[n].os++;
+        else nsStats[n].other++;
+      });
+
+      const maxN = Math.max(1, ...namespaces.map(n => nsStats[n].gradle + nsStats[n].yarn + nsStats[n].os + nsStats[n].other));
+      const width = 460, height = 235;
+      let bars = "";
+
+      namespaces.forEach((n, idx) => {
+        const y = 26 + idx * 42;
+        const s = nsStats[n];
+        const total = s.gradle + s.yarn + s.os + s.other;
+        let xCur = 135;
+        const maxW = 235;
+
+        bars += `<text x="128" y="${y + 15}" text-anchor="end" fill="${colors.textMain}" font-size="10.5" font-family="JetBrains Mono, monospace" font-weight="600">${n}</text>`;
+        bars += `<rect x="135" y="${y}" width="${maxW}" height="20" rx="4" fill="${colors.barBg}"/>`;
+
+        [
+          { val: s.gradle, color: "#3b82f6" },
+          { val: s.yarn, color: "#10b981" },
+          { val: s.os, color: "#a855f7" },
+          { val: s.other, color: "#64748b" }
+        ].forEach(seg => {
+          if (seg.val > 0) {
+            const w = Math.max(4, (seg.val / maxN) * maxW);
+            bars += `<rect x="${xCur}" y="${y}" width="${w}" height="20" fill="${seg.color}"/>`;
+            xCur += w;
+          }
+        });
+
+        bars += `<text x="${xCur + 8}" y="${y + 14}" fill="${colors.textMuted}" font-size="10.5" font-family="JetBrains Mono, monospace">${total.toLocaleString()}</text>`;
+      });
+
+      const legend = `
+        <g transform="translate(20, 212)" font-size="10" fill="${colors.textMuted}">
+          <rect x="0" y="-8" width="9" height="9" rx="2" fill="#3b82f6"/><text x="13" y="0">Java-Gradle (build.gradle)</text>
+          <rect x="148" y="-8" width="9" height="9" rx="2" fill="#10b981"/><text x="161" y="0">Node-Yarn (yarn.lock)</text>
+          <rect x="282" y="-8" width="9" height="9" rx="2" fill="#a855f7"/><text x="295" y="0">RHEL-OS</text>
+          <rect x="355" y="-8" width="9" height="9" rx="2" fill="#64748b"/><text x="368" y="0">Pending/Skipped</text>
+        </g>
+      `;
+
+      document.getElementById("chart-container-namespace").innerHTML = `
+        <svg id="svg-chart-namespace" viewBox="0 0 ${width} ${height}" class="w-full h-auto">
+          <rect width="${width}" height="${height}" fill="${colors.bg}" rx="8"/>
+          ${bars}
+          ${legend}
+        </svg>
+      `;
+    }
+
+    function renderStateRibbonAndArtifactCards() {
+      const stateCounts = {};
+      ALL_15_STATES.forEach(s => stateCounts[s.code] = 0);
+      masterVulnData.forEach(r => {
+        if (currentClusterFilter !== "BOTH" && r.Cluster !== currentClusterFilter) return;
+        if (stateCounts[r.Automation_State] !== undefined) stateCounts[r.Automation_State]++;
+      });
+
+      const ribbonEl = document.getElementById("state-ribbon-grid");
+      ribbonEl.innerHTML = ALL_15_STATES.map(st => {
+        const count = stateCounts[st.code] || 0;
+        const isActive = currentStateFilter === st.code;
+        return `
+          <button onclick="setStateFilter('${isActive ? 'ALL' : st.code}')" title="${st.desc}"
+            class="text-left p-2 rounded-lg border transition flex flex-col justify-between ${isActive ? 'bg-blue-50 dark:bg-blue-950/90 border-blue-400 ring-1 ring-blue-400' : 'bg-white dark:bg-slate-900/90 border-slate-300 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-600'}">
+            <div class="flex items-center justify-between w-full">
+              <span class="w-2 h-2 rounded-full" style="background:${st.color}"></span>
+              <span class="mono text-xs font-extrabold ${count > 0 ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-600'}">${count.toLocaleString()}</span>
+            </div>
+            <div class="mono text-[10px] font-semibold text-slate-600 dark:text-slate-300 truncate mt-1">${st.short}</div>
+            <div class="text-[9px] text-slate-500 dark:text-slate-400 truncate">${st.phase}</div>
+          </button>
+        `;
+      }).join("");
+
+      const primaryServices = [
+        {
+          asset: "order-dispatcher-service",
+          namespace: "retail-commerce",
+          cluster: "DEV",
+          developer: "dev-alex",
+          techStack: "Java-Gradle (Auto-Detected after Git Pull: build.gradle)",
+          laneTopology: "Multi-Lane (Alpha/Beta/Gamma)",
+          replicas: ["public-gateway-order-dispatcher-service", "partner-route-order-dispatcher-service", "partner-ext-route-order-dispatcher-service"],
+          baseBranchMode: "USE_GLOBAL_PATTERN",
+          resolvedBranch: "Release/10_24_2026",
+          featureBranch: "feature/vuln-fix-order-dispatcher-20261020",
+          buildPropsBump: "version: 1.0.23 -> 1.0.24",
+          currentState: "14_MR_CREATED_SUCCESS",
+          stepIndex: 14,
+          mrUrl: "https://gitlab.com/sandbox-org/retail-commerce/order-dispatcher-service/-/merge_requests/14",
+          nextAction: "1) Review & Merge MR #14 into Release/10_24_2026. 2) Deploy Base Service to Stage-Alpha & capture Jenkins image tag (1.0.24). 3) Promote image tag 1.0.24 to 3 linked replica Jenkins jobs. 4) Manually refactor javax.servlet -> jakarta.servlet for Spring 6 (VULN-3004)."
+        },
+        {
+          asset: "inventory-sync-worker",
+          namespace: "retail-commerce",
+          cluster: "DEV",
+          developer: "dev-alex",
+          techStack: "Java-Gradle (Auto-Detected after Git Pull: build.gradle)",
+          laneTopology: "Single-Lane Only (Live)",
+          replicas: [],
+          baseBranchMode: "USE_GLOBAL_PATTERN",
+          resolvedBranch: "Release/10_24_2026",
+          featureBranch: "feature/vuln-fix-inventory-sync-20261020",
+          buildPropsBump: "version: 3.1.0 -> 3.1.1",
+          currentState: "14_MR_CREATED_SUCCESS",
+          stepIndex: 14,
+          mrUrl: "https://gitlab.com/sandbox-org/retail-commerce/inventory-sync-worker/-/merge_requests/5",
+          nextAction: "Review MR #5 and deploy directly to Single-Live-Lane Jenkins pipeline; run Bruno API sanity suite."
+        },
+        {
+          asset: "customer-dashboard-ui",
+          namespace: "wealth-portal",
+          cluster: "DEV",
+          developer: "dev-alex",
+          techStack: "Node-Yarn (Auto-Detected after Git Pull: package.json + yarn.lock)",
+          laneTopology: "Multi-Lane (Alpha/Beta/Gamma)",
+          replicas: [],
+          baseBranchMode: "USE_GLOBAL_PATTERN",
+          resolvedBranch: "Release/10_24_2026",
+          featureBranch: "feature/vuln-fix-customer-dashboard-20261020",
+          buildPropsBump: "version: 2.4.10 -> 2.4.11",
+          currentState: "14_MR_CREATED_SUCCESS",
+          stepIndex: 14,
+          mrUrl: "https://gitlab.com/sandbox-org/wealth-portal/customer-dashboard-ui/-/merge_requests/9",
+          nextAction: "Review MR #9 (lodash + cookie resolutions); manually fix Axios 1.x TypeScript AxiosRequestConfig headers in client.ts (VULN-3013); ignore express Stage-Gamma lockfile drift (VULN-3012)."
+        },
+        {
+          asset: "portfolio-reporting-ui",
+          namespace: "wealth-portal",
+          cluster: "DEV",
+          developer: "dev-priya",
+          techStack: "Node-Yarn (Auto-Detected after Git Pull: package.json + yarn.lock)",
+          laneTopology: "Single-Lane Only (Live)",
+          replicas: [],
+          baseBranchMode: "USE_GLOBAL_PATTERN",
+          resolvedBranch: "Release/10_24_2026",
+          featureBranch: "feature/vuln-fix-portfolio-reporting-20261020",
+          buildPropsBump: "version: 1.2.0 -> 1.2.1",
+          currentState: "14_MR_CREATED_SUCCESS",
+          stepIndex: 14,
+          mrUrl: "https://gitlab.com/sandbox-org/wealth-portal/portfolio-reporting-ui/-/merge_requests/3",
+          nextAction: "Review MR #3 and deploy to Single-Live-Lane; verify UI dashboard rendering in Stage."
+        },
+        {
+          asset: "ledger-settlement-engine",
+          namespace: "core-banking",
+          cluster: "DEV",
+          developer: "dev-priya",
+          techStack: "Java-Gradle (Auto-Detected after Git Pull: build.gradle)",
+          laneTopology: "Multi-Lane (Alpha/Beta/Gamma)",
+          replicas: [],
+          baseBranchMode: "OVERRIDE: custom_oct_branch",
+          resolvedBranch: "custom_oct_branch",
+          featureBranch: "feature/vuln-fix-ledger-settlement-20261020",
+          buildPropsBump: "version: 4.1.8 -> 4.1.9",
+          currentState: "14_MR_CREATED_SUCCESS",
+          stepIndex: 14,
+          mrUrl: "https://gitlab.com/sandbox-org/core-banking/ledger-settlement-engine/-/merge_requests/22",
+          nextAction: "Custom base branch override (custom_oct_branch) applied via Tab 2. Review MR #22 and deploy to assigned Multi-Lane Stage."
+        },
+        {
+          asset: "payment-gateway-adapter",
+          namespace: "core-banking",
+          cluster: "DEV",
+          developer: "dev-rohan",
+          techStack: "Unknown (Pending Checkout - Base Branch Missing)",
+          laneTopology: "Single-Lane Only (Live)",
+          replicas: [],
+          baseBranchMode: "USE_GLOBAL_PATTERN",
+          resolvedBranch: "Release/10_24_2026 (Missing on GitLab)",
+          featureBranch: "Not Created (Blocked at State 06)",
+          buildPropsBump: "Not Bumped",
+          currentState: "06_BASE_BRANCH_NOT_FOUND",
+          stepIndex: 6,
+          mrUrl: "",
+          nextAction: "BLOCKED: Release/10_24_2026 does not exist on GitLab for payment-gateway-adapter. Set Base_Branch_Mode_Or_Override in Tab 2 (Service_Registry_Mapping) or pass --base-branch CLI flag."
+        },
+        {
+          asset: "old-batch-archiver & deprecated-legacy-widget",
+          namespace: "legacy-archive-ns / wealth-portal",
+          cluster: "DEV",
+          developer: "unassigned",
+          techStack: "Skipped (Excluded by Tab 1 Rule)",
+          laneTopology: "Single-Lane Only (Live)",
+          replicas: [],
+          baseBranchMode: "SKIPPED",
+          resolvedBranch: "N/A (Excluded)",
+          featureBranch: "N/A",
+          buildPropsBump: "N/A",
+          currentState: "00_EXCLUDED_BY_RULE",
+          stepIndex: 0,
+          mrUrl: "",
+          nextAction: "Automatically skipped by Tab 1 Exclusion Rules (excludeNamespaces=legacy-archive-ns & excludeAssets=deprecated-legacy-widget). Zero developer action required."
+        }
+      ];
+
+      const cardsContainer = document.getElementById("artifact-tracer-cards");
+      const devFilter = document.getElementById("flt-dev").value;
+      const nsFilter = document.getElementById("flt-namespace").value;
+
+      const visibleServices = primaryServices.filter(s => {
+        if (devFilter !== "ALL" && s.developer !== devFilter) return false;
+        if (nsFilter !== "ALL" && !s.namespace.includes(nsFilter)) return false;
+        return true;
+      });
+
+      document.getElementById("badge-tracer-count").textContent = visibleServices.length;
+
+      cardsContainer.innerHTML = visibleServices.map(svc => {
+        const svcItems = BASELINE_MASTER_TRACKER.filter(r =>
+          r.Base_Service_Mapped === svc.asset ||
+          (svc.asset.includes("old-batch-archiver") && (r.Asset === "old-batch-archiver" || r.Asset === "deprecated-legacy-widget"))
+        );
+
+        const stepperHtml = ALL_15_STATES.map((st, idx) => {
+          let cls = "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-500 border-slate-300 dark:border-slate-700";
+          if (svc.stepIndex === 0 && idx === 0) {
+            cls = "bg-slate-300 dark:bg-slate-600 text-slate-800 dark:text-white border-slate-400 font-bold ring-2 ring-slate-400";
+          } else if (svc.stepIndex === 6 && idx === 6) {
+            cls = "bg-amber-500 dark:bg-amber-600 text-white border-amber-400 font-bold ring-2 ring-amber-400 animate-pulse";
+          } else if (idx < svc.stepIndex && idx > 0 && idx !== 2 && idx !== 6 && idx !== 8 && idx !== 9) {
+            cls = "bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700/70";
+          } else if (idx === svc.stepIndex && svc.stepIndex === 14) {
+            cls = "bg-emerald-600 text-white border-emerald-300 font-bold ring-2 ring-emerald-400";
+          }
+          const hadRollback = svcItems.some(i => i.Automation_State === "12_BUILD_FAILED_ROLLED_BACK");
+          if (idx === 12 && hadRollback) {
+            cls = "bg-rose-100 dark:bg-rose-900/90 text-rose-800 dark:text-rose-200 border-rose-400 dark:border-rose-500 font-bold";
+          }
+          const hadReplica = svc.replicas.length > 0;
+          if (idx === 3 && hadReplica) {
+            cls = "bg-cyan-100 dark:bg-cyan-900/90 text-cyan-800 dark:text-cyan-200 border-cyan-400 dark:border-cyan-500 font-bold";
+          }
+
+          return `
+            <div class="flex-1 min-w-[52px] text-center py-1 px-1 rounded border text-[9.5px] mono ${cls}" title="${st.code}: ${st.desc}">
+              ${st.code.slice(0, 2)}
+            </div>
+          `;
+        }).join("");
+
+        const replicaBanner = svc.replicas.length > 0 ? `
+          <div class="mt-3 p-3 rounded-lg bg-cyan-50 dark:bg-cyan-950/60 border border-cyan-300 dark:border-cyan-700/70 flex flex-wrap items-center justify-between gap-2 text-xs">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded bg-cyan-600 text-white font-bold mono text-[10px]">03_REPLICA_MERGED_TO_BASE (3 Replicas)</span>
+              <span class="text-cyan-800 dark:text-cyan-200">Linked Replicas: <code class="text-slate-900 dark:text-white">${svc.replicas.join(", ")}</code></span>
+            </div>
+            <div class="text-cyan-700 dark:text-cyan-300 font-semibold">
+              Phase 2 Reminder: Promote Base Service Jenkins Tag <code class="bg-cyan-200 dark:bg-cyan-900 px-1.5 py-0.5 rounded text-cyan-900 dark:text-white">1.0.24</code> across all 3 Replica Jenkins jobs!
+            </div>
+          </div>
+        ` : "";
+
+        const isOverride = svc.baseBranchMode.includes("OVERRIDE");
+        const isMissing = svc.resolvedBranch.includes("Missing");
+        const branchBadgeClass = isMissing
+          ? "bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-300 border-rose-300 dark:border-rose-700"
+          : isOverride
+          ? "bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700"
+          : "bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700";
+
+        return `
+          <div class="glass-panel rounded-xl p-5 card-hover space-y-4">
+            <div class="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-3.5">
+              <div>
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-700/60 text-[11px] font-bold mono">${svc.cluster} / ${svc.namespace}</span>
+                  <h3 class="text-base font-extrabold text-slate-900 dark:text-white mono">${svc.asset}</h3>
+                  <span class="px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold">👤 ${svc.developer}</span>
+                  <span class="px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-950/90 text-indigo-800 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-700/50 text-xs font-mono">${svc.laneTopology}</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-3 mt-2 text-xs">
+                  <div><span class="text-slate-500 dark:text-slate-400">Post-Pull Tech Stack:</span> <code class="text-blue-700 dark:text-blue-300 font-semibold">${svc.techStack}</code></div>
+                  <div><span class="text-slate-500 dark:text-slate-400">build.properties (+1):</span> <code class="text-emerald-700 dark:text-emerald-300 font-semibold">${svc.buildPropsBump}</code></div>
+                </div>
+              </div>
+
+              <div class="flex flex-wrap items-center gap-2">
+                <div class="px-2.5 py-1 rounded-lg border text-xs mono ${branchBadgeClass}">
+                  <span class="opacity-75">${svc.baseBranchMode}:</span> <strong>${svc.resolvedBranch}</strong>
+                </div>
+                ${svc.mrUrl ? `
+                  <a href="${svc.mrUrl}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 dark:hover:bg-emerald-500 text-white text-xs font-bold shadow flex items-center gap-1.5 transition">
+                    <span>🔗 Open GitLab MR</span>
+                  </a>
+                ` : `
+                  <span class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-mono border border-slate-300 dark:border-slate-700">No MR Raised (${svc.currentState})</span>
+                `}
+              </div>
+            </div>
+
+            <div>
+              <div class="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 mb-1.5">
+                <span class="font-semibold uppercase tracking-wider">15-State Deterministic Lifecycle Progression</span>
+                <span class="mono text-slate-700 dark:text-slate-300">Current State: <strong class="text-emerald-600 dark:text-emerald-400">${svc.currentState}</strong></span>
+              </div>
+              <div class="flex items-center gap-1 overflow-x-auto pb-1">
+                ${stepperHtml}
+              </div>
+            </div>
+
+            ${replicaBanner}
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr class="bg-slate-100 dark:bg-slate-900/90 text-slate-600 dark:text-slate-400 border-b border-slate-300 dark:border-slate-800 text-[11px]">
+                    <th class="py-2 px-2.5">Vuln_ID / Asset</th>
+                    <th class="py-2 px-2.5">CVE_ID &amp; Library</th>
+                    <th class="py-2 px-2.5">Version Upgrade</th>
+                    <th class="py-2 px-2.5">Batch &amp; Commit</th>
+                    <th class="py-2 px-2.5">Computed Fix Complexity</th>
+                    <th class="py-2 px-2.5">State Code</th>
+                    <th class="py-2 px-2.5">Compiler / Pipeline Diagnostic Notes</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200 dark:divide-slate-800/60">
+                  ${svcItems.map(item => {
+                    const isRollback = item.Automation_State === "12_BUILD_FAILED_ROLLED_BACK";
+                    const isReplica = item.Automation_State === "03_REPLICA_MERGED_TO_BASE";
+                    const isExcluded = item.Automation_State === "00_EXCLUDED_BY_RULE" || item.Automation_State === "02_OS_LAYER_SKIPPED";
+                    const rowBg = isRollback ? "bg-rose-50 dark:bg-rose-950/30" : isReplica ? "bg-cyan-50 dark:bg-cyan-950/20" : isExcluded ? "opacity-60" : "";
+                    return `
+                      <tr class="${rowBg} hover:bg-slate-100 dark:hover:bg-slate-800/50">
+                        <td class="py-2 px-2.5 mono font-semibold text-slate-900 dark:text-white">
+                          ${item.Vuln_ID}
+                          <div class="text-[10px] text-slate-500 dark:text-slate-400 font-normal">${item.Asset}</div>
+                        </td>
+                        <td class="py-2 px-2.5 mono">
+                          <span class="text-blue-700 dark:text-blue-300 font-semibold">${item.CVE_ID}</span>
+                          <div class="text-[11px] text-slate-600 dark:text-slate-300">${item.Vulnerable_Library}</div>
+                        </td>
+                        <td class="py-2 px-2.5 mono text-[11px]">
+                          <span class="text-slate-500 dark:text-slate-400">${item.Current_Version}</span> &rarr; <span class="text-emerald-700 dark:text-emerald-300 font-bold">${item.Selected_Safe_Version}</span>
+                        </td>
+                        <td class="py-2 px-2.5 mono text-[11px]">
+                          <span class="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200">${item.Batch_Group}</span>
+                          <span class="ml-1 ${isRollback ? 'text-rose-600 dark:text-rose-400 font-bold' : 'text-emerald-600 dark:text-emerald-400'}">${item.Commit_Hash}</span>
+                        </td>
+                        <td class="py-2 px-2.5 text-[11px]">
+                          <span class="px-2 py-0.5 rounded font-semibold ${isRollback ? 'bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-300 border border-rose-300 dark:border-rose-700' : item.Computed_Fix_Complexity.includes('Medium') ? 'bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-700' : item.Computed_Fix_Complexity.includes('Simple') ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700' : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}">
+                            ${item.Computed_Fix_Complexity}
+                          </span>
+                        </td>
+                        <td class="py-2 px-2.5 mono text-[10.5px] font-bold ${isRollback ? 'text-rose-600 dark:text-rose-400' : isReplica ? 'text-cyan-700 dark:text-cyan-300' : 'text-emerald-600 dark:text-emerald-300'}">
+                          ${item.Automation_State}
+                        </td>
+                        <td class="py-2 px-2.5 text-[11px] text-slate-700 dark:text-slate-300 flex items-center justify-between gap-2">
+                          <span>${item.Diagnostic_Notes}</span>
+                          ${isRollback ? `<button onclick="openRollbackModal('${item.Vuln_ID}')" class="px-2 py-0.5 rounded bg-rose-600 hover:bg-rose-700 dark:bg-rose-700 dark:hover:bg-rose-600 text-white text-[10px] font-bold shrink-0">View Trace</button>` : ''}
+                        </td>
+                      </tr>
+                    `;
+                  }).join("")}
+                </tbody>
+              </table>
+            </div>
+
+            <div class="p-3 rounded-lg bg-slate-100 dark:bg-slate-900/90 border border-slate-300 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs">
+              <div>
+                <span class="font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider text-[10px] mr-2">Phase 2 Next Developer Action:</span>
+                <span class="text-slate-800 dark:text-slate-200">${svc.nextAction}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function openRollbackModal(vulnId) {
+      const item = BASELINE_MASTER_TRACKER.find(r => r.Vuln_ID === vulnId) || BASELINE_MASTER_TRACKER[3];
+      document.getElementById("modal-title").textContent = `Compiler Failure & Deterministic Git Rollback Trace — ${item.Vuln_ID} (${item.Asset})`;
+      const isJava = item.Auto_Detected_Tech_Stack.includes("Java");
+      const cmd = isJava ? "./gradlew compileJava test --no-daemon" : "yarn install --frozen-lockfile && yarn build";
+      const errLog = isJava
+        ? `> Task :compileJava FAILED\n/workspace/${item.Asset}/src/main/java/com/enterprise/dispatcher/ filter/AuthHeaderFilter.java:14: error: package javax.servlet.http does not exist\nimport javax.servlet.http.HttpServletRequest;\n                         ^\n1 error\nFAILURE: Build failed with an exception (Spring WebMVC 5.3.20 -> 6.0.12 requires Jakarta EE 9+ namespace migration).`
+        : `error TS2322: Type '{ Authorization: string; }' is not assignable to type 'AxiosHeaders | Partial<RawAxiosRequestHeaders>'.\n  src/api/client.ts(42,7): Axios 0.21.1 -> 1.7.4 breaking TypeScript header interface change.\nerror Command failed with exit code 2.`;
+
+      document.getElementById("modal-body").innerHTML = `
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50 dark:bg-slate-950 p-3 rounded-lg border border-slate-300 dark:border-slate-800">
+          <div><span class="text-slate-500 dark:text-slate-400 block">Library Attempted:</span><strong class="mono text-slate-900 dark:text-white">${item.Vulnerable_Library}</strong></div>
+          <div><span class="text-slate-500 dark:text-slate-400 block">Target Version:</span><strong class="mono text-rose-600 dark:text-rose-400">${item.Current_Version} &rarr; ${item.Selected_Safe_Version}</strong></div>
+          <div><span class="text-slate-500 dark:text-slate-400 block">Checkpoint Action:</span><strong class="mono text-amber-600 dark:text-amber-300">git checkout -- . (Batch-2 Reverted)</strong></div>
+        </div>
+        <div>
+          <div class="text-slate-600 dark:text-slate-400 font-semibold mb-1">1. Executed Build Command (${item.Batch_Group}):</div>
+          <pre class="bg-slate-100 dark:bg-slate-950 text-emerald-700 dark:text-emerald-300 p-2.5 rounded border border-slate-300 dark:border-slate-800 mono overflow-x-auto">$ ${cmd}</pre>
+        </div>
+        <div>
+          <div class="text-slate-600 dark:text-slate-400 font-semibold mb-1">2. Compiler Stderr Output:</div>
+          <pre class="bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-200 p-3 rounded border border-rose-300 dark:border-rose-800/70 mono overflow-x-auto whitespace-pre-wrap">${errLog}</pre>
+        </div>
+        <div>
+          <div class="text-slate-600 dark:text-slate-400 font-semibold mb-1">3. Automatic Recovery &amp; State Transition:</div>
+          <pre class="bg-slate-100 dark:bg-slate-950 text-cyan-700 dark:text-cyan-300 p-2.5 rounded border border-slate-300 dark:border-slate-800 mono overflow-x-auto">$ git checkout -- build.gradle package.json yarn.lock\n[INFO] Reverted failing Batch-2 cleanly. Preserved passing Batch-1 commit (${item.Asset === 'order-dispatcher-service' ? 'a81f49c' : 'c77d21b'}).\n[INFO] Updated Computed_Fix_Complexity = "Complex (Compile Failed - Rolled Back)" | State = 12_BUILD_FAILED_ROLLED_BACK</pre>
+        </div>
+      `;
+      document.getElementById("diagnostic-modal").classList.remove("hidden");
+    }
+
+    function closeModal() {
+      document.getElementById("diagnostic-modal").classList.add("hidden");
+    }
+
+    function renderConfigAndRegistryTables() {
+      const cfgBody = document.getElementById("config-table-body");
+      cfgBody.innerHTML = globalConfigData.map((row, idx) => `
+        <tr class="hover:bg-slate-100 dark:hover:bg-slate-900/60">
+          <td class="py-2 px-2.5 text-slate-600 dark:text-slate-400 font-medium">${row.Config_Category}</td>
+          <td class="py-2 px-2.5 mono font-bold text-blue-700 dark:text-blue-300">${row.Config_Key}</td>
+          <td class="py-2 px-2.5">
+            <input type="text" data-cfg-idx="${idx}" value="${row.Config_Value}"
+              class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded px-2 py-1 text-xs mono text-emerald-700 dark:text-emerald-300 focus:outline-none focus:border-blue-500" />
+            <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">${row.Operational_Behavior_And_CLI_Override}</div>
+          </td>
+        </tr>
+      `).join("");
+
+      const regBody = document.getElementById("registry-table-body");
+      regBody.innerHTML = serviceRegistryData.map(r => {
+        const isReplica = r.Is_Multi_Route_Replica.includes("Yes");
+        const isExcluded = r.Exclude_Service_Flag.includes("Yes");
+        return `
+          <tr class="hover:bg-slate-100 dark:hover:bg-slate-900/60 ${isExcluded ? 'opacity-60' : ''}">
+            <td class="py-2 px-2 mono font-bold text-slate-700 dark:text-slate-300">${r.Cluster}</td>
+            <td class="py-2 px-2 mono text-blue-700 dark:text-blue-300">${r.Namespace}</td>
+            <td class="py-2 px-2 mono font-semibold text-slate-900 dark:text-white">${r.Asset_Service}</td>
+            <td class="py-2 px-2 text-slate-700 dark:text-slate-300">${r.Assigned_Developer}</td>
+            <td class="py-2 px-2">
+              <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${isReplica ? 'bg-cyan-100 dark:bg-cyan-950 text-cyan-800 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-700' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'}">${r.Is_Multi_Route_Replica}</span>
+              <div class="text-[10px] mono text-slate-500 dark:text-slate-400">&rarr; ${r.Base_Service_If_Replica}</div>
+            </td>
+            <td class="py-2 px-2 text-[11px] text-indigo-700 dark:text-indigo-300">${r.Pipeline_Lane_Mode}</td>
+            <td class="py-2 px-2 mono text-[11px]">
+              <div class="${r.Base_Branch_Mode_Or_Override.includes('OVERRIDE') ? 'text-amber-600 dark:text-amber-300 font-bold' : 'text-slate-500 dark:text-slate-400'}">${r.Base_Branch_Mode_Or_Override}</div>
+              <div class="text-emerald-700 dark:text-emerald-300 font-semibold">${r.Resolved_Base_Branch}</div>
+            </td>
+            <td class="py-2 px-2 mono text-[11px] text-slate-700 dark:text-slate-200">${r.Auto_Detected_Tech_Stack}</td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function applyLiveConfigEdits() {
+      const inputs = document.querySelectorAll("[data-cfg-idx]");
+      inputs.forEach(inp => {
+        const idx = parseInt(inp.getAttribute("data-cfg-idx"), 10);
+        globalConfigData[idx].Config_Value = inp.value.trim();
+      });
+
+      const clusterCfg = globalConfigData.find(c => c.Config_Key === "activeClusterFilter")?.Config_Value || "DEV";
+      const patternCfg = globalConfigData.find(c => c.Config_Key === "releaseBranchPatternTemplate")?.Config_Value || "Release/{MM}_{DD}_{YYYY}";
+      const targetVal = globalConfigData.find(c => c.Config_Key === "activeReleaseTargetValue")?.Config_Value || "10_24_2026";
+      const resolvedBranch = patternCfg.replace("{MM}_{DD}_{YYYY}", targetVal);
+
+      document.getElementById("banner-release-branch").textContent = resolvedBranch;
+      if (["DEV", "PROD", "BOTH"].includes(clusterCfg.toUpperCase())) {
+        setClusterFilter(clusterCfg.toUpperCase());
+      } else {
+        applyAllFilters();
+      }
+      showToast(`Applied Zero-JSON Config: Cluster=${clusterCfg}, Resolved Branch=${resolvedBranch}`, "emerald");
+    }
+
+    function setupVirtualScroller() {
+      const spacer = document.getElementById("virtual-scroll-spacer");
+      if (!spacer) return;
+      const totalHeight = filteredVulnData.length * VIRTUAL_ROW_HEIGHT;
+      spacer.style.height = `${Math.max(totalHeight, 100)}px`;
+      onVirtualScroll();
+    }
+
+    function onVirtualScroll() {
+      const viewport = document.getElementById("virtual-scroll-viewport");
+      const content = document.getElementById("virtual-scroll-content");
+      if (!viewport || !content) return;
+
+      const scrollTop = viewport.scrollTop;
+      const viewportHeight = viewport.clientHeight || 600;
+
+      const startIdx = Math.max(0, Math.floor(scrollTop / VIRTUAL_ROW_HEIGHT) - VIRTUAL_BUFFER);
+      const endIdx = Math.min(
+        filteredVulnData.length,
+        Math.ceil((scrollTop + viewportHeight) / VIRTUAL_ROW_HEIGHT) + VIRTUAL_BUFFER
+      );
+
+      content.style.transform = `translateY(${startIdx * VIRTUAL_ROW_HEIGHT}px)`;
+
+      let html = "";
+      for (let i = startIdx; i < endIdx; i++) {
+        const r = filteredVulnData[i];
+        const isRollback = r.Automation_State === "12_BUILD_FAILED_ROLLED_BACK";
+        const isReplica = r.Automation_State === "03_REPLICA_MERGED_TO_BASE";
+        const isMR = r.Automation_State === "14_MR_CREATED_SUCCESS";
+        const sevBadge = r.Severity === "CRITICAL"
+          ? "bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-300 border-rose-300 dark:border-rose-700"
+          : r.Severity === "HIGH"
+          ? "bg-orange-100 dark:bg-orange-950 text-orange-800 dark:text-orange-300 border-orange-300 dark:border-orange-700"
+          : r.Severity === "MEDIUM"
+          ? "bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700"
+          : "bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-400 border-slate-300 dark:border-slate-700";
+
+        html += `
+          <div class="grid grid-cols-12 items-center px-3 text-xs hover:bg-slate-100 dark:hover:bg-slate-800/60 transition" style="height:${VIRTUAL_ROW_HEIGHT}px;">
+            <div class="col-span-1 mono">
+              <div class="font-bold text-slate-900 dark:text-white">${r.Vuln_ID}</div>
+              <span class="text-[10px] px-1.5 py-0.2 rounded ${r.Cluster === 'DEV' ? 'bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300' : 'bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300'}">${r.Cluster}</span>
+            </div>
+            <div class="col-span-2 pr-2 truncate">
+              <div class="font-semibold text-slate-800 dark:text-slate-200 truncate" title="${r.Asset}">${r.Asset}</div>
+              <div class="text-[10px] mono text-slate-500 dark:text-slate-400 truncate">${r.Namespace} &rarr; ${r.Base_Service_Mapped}</div>
+            </div>
+            <div class="col-span-1 pr-2">
+              <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold ${r.Grouping === 'Red Hat OS' ? 'bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300' : 'bg-indigo-100 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-300'}">${r.Grouping}</span>
+              <div class="text-[10px] mono text-slate-500 dark:text-slate-400 truncate mt-0.5">${r.Auto_Detected_Tech_Stack}</div>
+            </div>
+            <div class="col-span-2 pr-2 truncate mono">
+              <div class="text-blue-700 dark:text-blue-300 font-bold">${r.CVE_ID}</div>
+              <div class="text-[10.5px] text-slate-700 dark:text-slate-300 truncate" title="${r.Vulnerable_Library}">${r.Vulnerable_Library}</div>
+            </div>
+            <div class="col-span-1 pr-2 mono text-[11px]">
+              <div class="text-slate-500 dark:text-slate-400">${r.Current_Version}</div>
+              <div class="text-emerald-700 dark:text-emerald-300 font-bold">&rarr; ${r.Selected_Safe_Version}</div>
+            </div>
+            <div class="col-span-1 pr-2">
+              <span class="px-1.5 py-0.2 rounded border text-[10px] font-bold mono ${sevBadge}">${r.Severity}</span>
+              <div class="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">${r.Assigned_Developer} • ${r.Pipeline_Lane}</div>
+            </div>
+            <div class="col-span-1 pr-2 mono text-[10.5px] truncate">
+              <div class="text-emerald-700 dark:text-emerald-300 truncate" title="${r.Base_Branch_Used}">${r.Base_Branch_Used}</div>
+              <div class="text-slate-500 dark:text-slate-400">bump: ${r.Build_Props_Bumped}</div>
+            </div>
+            <div class="col-span-1 pr-2 truncate text-[10.5px]">
+              <span class="font-semibold ${isRollback ? 'text-rose-600 dark:text-rose-400' : isReplica ? 'text-cyan-700 dark:text-cyan-300' : 'text-slate-800 dark:text-slate-200'}" title="${r.Computed_Fix_Complexity}">${r.Computed_Fix_Complexity}</span>
+            </div>
+            <div class="col-span-1 pr-2 mono text-[10px]">
+              <div class="font-bold ${isMR ? 'text-emerald-600 dark:text-emerald-400' : isRollback ? 'text-rose-600 dark:text-rose-400' : isReplica ? 'text-cyan-700 dark:text-cyan-300' : 'text-amber-600 dark:text-amber-300'} truncate" title="${r.Automation_State}">${r.Automation_State}</div>
+              <div class="text-slate-500 dark:text-slate-400">${r.Batch_Group} (${r.Commit_Hash})</div>
+            </div>
+            <div class="col-span-1 truncate text-[10.5px]">
+              ${r.MR_URL && r.MR_URL.startsWith("http")
+                ? `<a href="${r.MR_URL}" target="_blank" class="text-blue-600 dark:text-blue-400 hover:underline font-semibold mono">Open MR &nearr;</a>`
+                : `<span class="text-slate-500 dark:text-slate-400 mono">${r.MR_URL || 'N/A'}</span>`
+              }
+              <div class="text-[10px] text-slate-500 dark:text-slate-400 truncate" title="${r.Diagnostic_Notes}">${r.Diagnostic_Notes}</div>
+            </div>
+          </div>
+        `;
+      }
+      content.innerHTML = html;
+    }
+
+    function toggleStressTest() {
+      const btn = document.getElementById("btn-stress-test");
+      const badge = document.getElementById("dataset-mode-badge");
+
+      if (isStressTestActive) {
+        isStressTestActive = false;
+        masterVulnData = JSON.parse(JSON.stringify(BASELINE_MASTER_TRACKER));
+        btn.innerHTML = `<span>⚡ Simulate 60,000+ Rows (48K OS + 12K App)</span>`;
+        btn.className = "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 dark:from-amber-600 dark:to-orange-600 hover:from-amber-600 hover:to-orange-600 dark:hover:from-amber-500 dark:hover:to-orange-500 text-white text-xs font-bold shadow-md shadow-orange-900/20 dark:shadow-orange-950/50 transition";
+        badge.textContent = "Step 1 v4 Baseline Loaded (24 Rows / 11 Services)";
+        badge.className = "px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/60";
+        applyAllFilters();
+        showToast("Restored exact 24-row Step 1 v4 Baseline dataset.", "emerald");
+        return;
+      }
+
+      const t0 = performance.now();
+      isStressTestActive = true;
+
+      const generated = [...JSON.parse(JSON.stringify(BASELINE_MASTER_TRACKER))];
+      const namespaces = ["retail-commerce", "wealth-portal", "core-banking", "legacy-archive-ns"];
+      const devs = ["dev-alex", "dev-priya", "dev-rohan", "infra-team", "unassigned"];
+      const lanes = ["Stage-Alpha", "Stage-Beta", "Stage-Gamma", "Single-Live-Lane"];
+      const severities = ["CRITICAL", "HIGH", "MEDIUM", "LOW"];
+
+      for (let i = 25; i <= 60000; i++) {
+        const isOS = i <= 48000;
+        const ns = namespaces[i % 4];
+        const cluster = (i % 15 === 0) ? "PROD" : "DEV";
+        const sev = severities[i % 4];
+        const lane = lanes[i % 4];
+
+        if (isOS) {
+          generated.push({
+            Vuln_ID: `VULN-${3000 + i}`,
+            Cluster: cluster,
+            Namespace: ns,
+            Asset: `microservice-node-${(i % 142) + 1}`,
+            Grouping: "Red Hat OS",
+            CVE_ID: `RHSA-2024:${1000 + (i % 8900)}`,
+            Vulnerable_Library: (i % 2 === 0) ? "openssl-libs" : "glibc-minimal",
+            Current_Version: "1.1.1k-7.el8",
+            Recommended_Fix_Version: "1.1.1k-12.el8_9",
+            Severity: sev,
+            Target_Date: "2026-10-24",
+            Remaining_Days: 4,
+            Pipeline_Lane: lane,
+            Assigned_Developer: "infra-team",
+            Exclusion_Match_Reason: "Excluded: Grouping (Red Hat OS)",
+            Base_Service_Mapped: `microservice-node-${(i % 142) + 1}`,
+            Auto_Detected_Tech_Stack: "RHEL-Container-OS",
+            Computed_Fix_Complexity: "OS-Image-Layer",
+            Selected_Safe_Version: "1.1.1k-12.el8_9",
+            Pipeline_Lane_Topology: "Multi-Lane (Alpha/Beta/Gamma)",
+            Base_Branch_Used: "N/A",
+            Feature_Branch: "N/A",
+            Build_Props_Bumped: "N/A",
+            Automation_State: "02_OS_LAYER_SKIPPED",
+            Batch_Group: "OS-Image",
+            Commit_Hash: "N/A",
+            MR_URL: "N/A",
+            Diagnostic_Notes: "Red Hat OS layer package; remediated via base UBI container tag"
+          });
+        } else {
+          const isGradle = (i % 3 !== 0);
+          let state = "14_MR_CREATED_SUCCESS";
+          let comp = "Simple (Direct Bump Passed)";
+          let excl = "Included (DEV Active)";
+          let dev = devs[i % 3];
+          let commit = "b92f11e";
+          let mr = `https://gitlab.com/sandbox-org/${ns}/service-${(i % 142) + 1}/-/merge_requests/${(i % 90) + 1}`;
+
+          if (cluster === "PROD") {
+            state = "00_EXCLUDED_BY_RULE";
+            comp = "Skipped";
+            excl = "Excluded: Cluster (PROD != DEV)";
+            commit = "N/A";
+            mr = "N/A";
+          } else if (ns === "legacy-archive-ns") {
+            state = "00_EXCLUDED_BY_RULE";
+            comp = "Skipped";
+            excl = "Excluded: Namespace (legacy-archive-ns)";
+            dev = "unassigned";
+            commit = "N/A";
+            mr = "N/A";
+          } else if (sev === "LOW") {
+            state = "00_EXCLUDED_BY_RULE";
+            comp = "Skipped";
+            excl = "Excluded: Severity (LOW)";
+            commit = "N/A";
+            mr = "N/A";
+          } else if (i % 19 === 0) {
+            state = "03_REPLICA_MERGED_TO_BASE";
+            comp = "Simple (Inherited via Replica Tag)";
+          } else if (i % 23 === 0) {
+            state = "12_BUILD_FAILED_ROLLED_BACK";
+            comp = "Complex (Compile Failed - Rolled Back)";
+            commit = "ROLLED_BACK";
+            mr = "MANUAL_CODE_FIX_REQUIRED";
+          } else if (i % 7 === 0) {
+            state = "14_MR_CREATED_SUCCESS";
+            comp = isGradle ? "Medium (Transitive Constraint)" : "Medium (Yarn Resolutions Override)";
+          }
+
+          generated.push({
+            Vuln_ID: `VULN-${3000 + i}`,
+            Cluster: cluster,
+            Namespace: ns,
+            Asset: `app-service-${(i % 142) + 1}`,
+            Grouping: "Application",
+            CVE_ID: `CVE-2024-${20000 + (i % 9500)}`,
+            Vulnerable_Library: isGradle ? "com.fasterxml.jackson.core:jackson-databind" : "lodash",
+            Current_Version: isGradle ? "2.13.2" : "4.17.19",
+            Recommended_Fix_Version: isGradle ? "2.15.4" : "4.17.21",
+            Severity: sev,
+            Target_Date: "2026-10-24",
+            Remaining_Days: 4,
+            Pipeline_Lane: lane,
+            Assigned_Developer: dev,
+            Exclusion_Match_Reason: excl,
+            Base_Service_Mapped: `app-service-${(i % 142) + 1}`,
+            Auto_Detected_Tech_Stack: isGradle ? "Java-Gradle" : "Node-Yarn",
+            Computed_Fix_Complexity: comp,
+            Selected_Safe_Version: isGradle ? "2.15.4" : "4.17.21",
+            Pipeline_Lane_Topology: (i % 2 === 0) ? "Multi-Lane (Alpha/Beta/Gamma)" : "Single-Lane Only (Live)",
+            Base_Branch_Used: "Release/10_24_2026",
+            Feature_Branch: `feature/vuln-fix-service-${(i % 142) + 1}-20261020`,
+            Build_Props_Bumped: "1.0.23 -> 1.0.24",
+            Automation_State: state,
+            Batch_Group: `Batch-${(i % 4) + 1}`,
+            Commit_Hash: commit,
+            MR_URL: mr,
+            Diagnostic_Notes: "Processed deterministically in Batch-of-2 pipeline"
+          });
+        }
+      }
+
+      masterVulnData = generated;
+      const elapsed = Math.round(performance.now() - t0);
+
+      btn.innerHTML = `<span>🔄 Reset to 24-Row Step 1 v4 Baseline</span>`;
+      btn.className = "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 dark:hover:bg-rose-500 text-white text-xs font-bold shadow-md transition";
+      badge.textContent = `Stress-Test Active: 60,000 Rows across 142 Microservices (${elapsed}ms)`;
+      badge.className = "px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-600";
+
+      applyAllFilters();
+      showToast(`Generated 60,000 rows (48K Red Hat OS + 12K App across 142 microservices) in ${elapsed}ms with DOM Virtual Scrolling!`, "amber");
+    }
+
+    function handleExcelUpload(event, fileRole) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      if (typeof XLSX === "undefined") {
+        showToast("SheetJS offline fallback active: Using pre-loaded v4 schema parser.", "amber");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const wb = XLSX.read(data, { type: "array" });
+
+          if (wb.SheetNames.includes("Global_Config_And_Exclusions")) {
+            globalConfigData = XLSX.utils.sheet_to_json(wb.Sheets["Global_Config_And_Exclusions"]);
+          }
+          if (wb.SheetNames.includes("Service_Registry_Mapping")) {
+            serviceRegistryData = XLSX.utils.sheet_to_json(wb.Sheets["Service_Registry_Mapping"]);
+          }
+          if (wb.SheetNames.includes("Master_Dev_Assigned_Tracker")) {
+            masterVulnData = XLSX.utils.sheet_to_json(wb.Sheets["Master_Dev_Assigned_Tracker"]);
+          } else if (wb.SheetNames.includes("Vulnerability_Line_Items")) {
+            masterVulnData = XLSX.utils.sheet_to_json(wb.Sheets["Vulnerability_Line_Items"]);
+          } else if (wb.SheetNames.length > 0) {
+            masterVulnData = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+          }
+
+          renderConfigAndRegistryTables();
+          applyAllFilters();
+          document.getElementById("dataset-mode-badge").textContent = `Loaded File: ${file.name} (${masterVulnData.length.toLocaleString()} rows)`;
+          showToast(`Successfully parsed ${file.name} (${wb.SheetNames.join(", ")})`, "emerald");
+        } catch (err) {
+          showToast(`Error parsing file: ${err.message}`, "rose");
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function exportSyncedWorkbook() {
+      if (typeof XLSX !== "undefined") {
+        const wb = XLSX.utils.book_new();
+        const ws1 = XLSX.utils.json_to_sheet(globalConfigData);
+        const ws2 = XLSX.utils.json_to_sheet(serviceRegistryData);
+        const ws3 = XLSX.utils.json_to_sheet(filteredVulnData.slice(0, 10000));
+        XLSX.utils.book_append_sheet(wb, ws1, "Global_Config_And_Exclusions");
+        XLSX.utils.book_append_sheet(wb, ws2, "Service_Registry_Mapping");
+        XLSX.utils.book_append_sheet(wb, ws3, "Master_Dev_Assigned_Tracker");
+        XLSX.writeFile(wb, "master-vulnerabilities-input-dev-v4-synced.xlsx");
+        showToast("Exported 3-Tab master-vulnerabilities-input-dev-v4-synced.xlsx!", "emerald");
+      } else {
+        exportFilteredCSV();
+      }
+    }
+
+    function exportFilteredCSV() {
+      if (filteredVulnData.length === 0) return;
+      const headers = Object.keys(filteredVulnData[0]);
+      const rows = [headers.join(",")];
+      const limit = Math.min(filteredVulnData.length, 60000);
+      for (let i = 0; i < limit; i++) {
+        const r = filteredVulnData[i];
+        rows.push(headers.map(h => `"${String(r[h] ?? "").replace(/"/g, '""')}"`).join(","));
+      }
+      const blob = new Blob([rows.join("\n")], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "vulnerability-tracker-v4-export.csv";
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast(`Exported ${limit.toLocaleString()} rows to CSV.`, "emerald");
+    }
+
+    function exportChartSVG(svgId, filename) {
+      const svgEl = document.getElementById(svgId);
+      if (!svgEl) return;
+      const serializer = new XMLSerializer();
+      let source = serializer.serializeToString(svgEl);
+      if (!source.match(/^<svg[^>]+xmlns="http\:\/\/www\.w3\.org\/2000\/svg"/)) {
+        source = source.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+      }
+      const blob = new Blob([source], { type: "image/svg+xml;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${filename}.svg`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast(`Downloaded crisp vector ${filename}.svg`, "blue");
+    }
+
+    function exportChartPNG(svgId, filename) {
+      const svgEl = document.getElementById(svgId);
+      if (!svgEl) return;
+      const serializer = new XMLSerializer();
+      let source = serializer.serializeToString(svgEl);
+      if (!source.match(/^<svg[^>]+xmlns="http\:\/\/www\.w3\.org\/2000\/svg"/)) {
+        source = source.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+      }
+      const img = new Image();
+      const svgBlob = new Blob([source], { type: "image/svg+xml;charset=utf-8" });
+      const url = URL.createObjectURL(svgBlob);
+      img.onload = function () {
+        const canvas = document.createElement("canvas");
+        canvas.width = 920;
+        canvas.height = 470;
+        const ctx = canvas.getContext("2d");
+        const isDark = document.documentElement.classList.contains('dark');
+        ctx.fillStyle = isDark ? "#0f172a" : "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        URL.revokeObjectURL(url);
+        const pngUrl = canvas.toDataURL("image/png");
+        const a = document.createElement("a");
+        a.href = pngUrl;
+        a.download = `${filename}.png`;
+        a.click();
+        showToast(`Downloaded high-DPI ${filename}.png`, "emerald");
+      };
+      img.src = url;
+    }
+
+    function adjustZoom(delta) {
+      const scaler = document.getElementById("workspace-scaler");
+      currentZoom = delta === 0 ? 1.0 : Math.min(Math.max(0.7, +(currentZoom + delta).toFixed(2)), 1.3);
+      scaler.style.transform = `scale(${currentZoom})`;
+      document.getElementById("zoom-label").textContent = `${Math.round(currentZoom * 100)}%`;
+    }
+  </script>
+</body>
+</html>
